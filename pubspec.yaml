@@ -1,8 +1,8 @@
 name: gaza_exchange_app
-description: "تطبيق تبادل السلع والعقارات لغزة"
+description: "تطبيق تبادل السلع والعقارات لغزة مع دعم التصنيفات والبحث الجغرافي"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 2.0.0+2
 
 environment:
   sdk: '>=3.1.0 <4.0.0'
@@ -18,7 +18,8 @@ dependencies:
   get: ^4.6.6
   
   # HTTP Client
-  dio: ^5.3.2
+  dio: ^5.4.0
+  html: ^0.15.4
   
   # Local Storage
   shared_preferences: ^2.2.2
@@ -38,6 +39,10 @@ dependencies:
   
   # Permissions
   permission_handler: ^11.0.1
+  
+  # Location Services
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
   
   # Utils
   intl: ^0.19.0

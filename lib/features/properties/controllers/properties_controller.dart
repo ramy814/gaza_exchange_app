@@ -1,11 +1,10 @@
 import 'package:get/get.dart';
-import 'package:gaza_exchange_app/core/services/api_service.dart';
-import 'package:gaza_exchange_app/features/properties/models/property_model.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../models/property_model.dart';
+import '../../../core/services/properties_service.dart';
 
 class PropertiesController extends GetxController {
-  final ApiService _apiService = Get.find<ApiService>();
+  final PropertiesService _propertiesService = Get.find<PropertiesService>();
 
   final isLoading = true.obs;
   final properties = <PropertyModel>[].obs;
@@ -25,20 +24,11 @@ class PropertiesController extends GetxController {
     try {
       isLoading.value = true;
 
-      final response = await _apiService.getAllProperties();
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        properties.value =
-            data.map((json) => PropertyModel.fromJson(json)).toList();
-        filteredProperties.value = properties;
-      } else {
-        Get.snackbar(
-          'خطأ',
-          'فشل في تحميل العقارات',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
+      final propertiesList = await _propertiesService.getAllProperties();
+      properties.value = propertiesList;
+      filteredProperties.value = properties;
+
+      print('Loaded ${propertiesList.length} properties');
     } catch (e) {
       debugPrint('Error loading properties: $e');
       Get.snackbar(

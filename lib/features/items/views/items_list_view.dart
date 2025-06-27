@@ -16,10 +16,13 @@ class ItemsListView extends GetView<ItemsController> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('السلع المتاحة'),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             onPressed: () => Get.toNamed(AppRoutes.addItem),
             icon: const Icon(Icons.add),
+            color: Colors.white,
           ),
         ],
       ),
@@ -42,31 +45,41 @@ class ItemsListView extends GetView<ItemsController> {
             ),
           ),
 
+          // Filter Info
+          _buildFilterInfo(),
+
           // Categories Filter
           SizedBox(
             height: 50,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: controller.categories.length,
-              itemBuilder: (context, index) {
-                final category = controller.categories[index];
-                return Obx(
-                  () => Padding(
+            child: Obx(() {
+              if (controller.isCategoriesLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: controller.categories.length,
+                itemBuilder: (context, index) {
+                  final category = controller.categories[index];
+                  final isSelected =
+                      controller.selectedCategoryId == category.id.toString();
+
+                  return Padding(
                     padding: const EdgeInsets.only(left: 8),
                     child: FilterChip(
-                      label: Text(category),
-                      selected: controller.selectedCategory == category,
-                      onSelected: (_) => controller.filterByCategory(category),
-                      selectedColor: Theme.of(
-                        context,
-                      ).primaryColor.withValues(alpha: 0.2),
-                      checkmarkColor: Theme.of(context).primaryColor,
+                      label: Text(category.name),
+                      selected: isSelected,
+                      onSelected: (_) =>
+                          controller.filterByCategory(category.id.toString()),
+                      selectedColor:
+                          AppTheme.primaryColor.withValues(alpha: 0.2),
+                      checkmarkColor: AppTheme.primaryColor,
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              );
+            }),
           ),
 
           const SizedBox(height: 16),
@@ -105,9 +118,9 @@ class ItemsListView extends GetView<ItemsController> {
                     mainAxisSpacing: 12,
                     childAspectRatio: 0.75,
                   ),
-                  itemCount: controller.filteredItems.length,
+                  itemCount: controller.items.length,
                   itemBuilder: (context, index) {
-                    final item = controller.filteredItems[index];
+                    final item = controller.items[index];
                     return _buildItemCard(item);
                   },
                 ),
@@ -136,6 +149,59 @@ class ItemsListView extends GetView<ItemsController> {
         },
       ),
     );
+  }
+
+  Widget _buildFilterInfo() {
+    return Obx(() {
+      if (!controller.hasActiveFilters) return const SizedBox.shrink();
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border:
+              Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.filter_list, color: AppTheme.primaryColor, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'عرض ${controller.resultsCount} نتيجة',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            if (controller.searchQuery.isNotEmpty)
+              Chip(
+                label: Text('"${controller.searchQuery}"'),
+                backgroundColor: Colors.white,
+                deleteIcon: const Icon(Icons.close, size: 16),
+                onDeleted: () => controller.searchItems(''),
+              ),
+            const SizedBox(width: 8),
+            if (controller.selectedCategoryId.isNotEmpty &&
+                controller.selectedCategoryId != '0')
+              Chip(
+                label: Text(controller.selectedCategoryName),
+                backgroundColor: Colors.white,
+                deleteIcon: const Icon(Icons.close, size: 16),
+                onDeleted: () => controller.filterByCategory('0'),
+              ),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: controller.clearFilters,
+              child: const Text('مسح الكل'),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildItemCard(ItemModel item) {
@@ -167,27 +233,26 @@ class ItemsListView extends GetView<ItemsController> {
                     topRight: Radius.circular(16),
                   ),
                 ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.inventory_2_outlined,
-                        size: 40,
-                        color: AppTheme.primaryGreen,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${item.price} ₪',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryGreen,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                child:
+                    (item.fullImageUrl != null && item.fullImageUrl!.isNotEmpty)
+                        ? ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              topRight: Radius.circular(16),
+                            ),
+                            child: Image.network(
+                              item.fullImageUrl!,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                print('❌ Error loading image: $error');
+                                print('❌ Image URL: ${item.fullImageUrl}');
+                                return _buildDefaultImage();
+                              },
+                            ),
+                          )
+                        : _buildDefaultImage(),
               ),
             ),
             // تفاصيل العنصر
@@ -197,25 +262,30 @@ class ItemsListView extends GetView<ItemsController> {
                 padding: const EdgeInsets.all(8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      item.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                    Flexible(
+                      child: Text(
+                        item.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      item.description,
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 11,
+                    Flexible(
+                      child: Text(
+                        item.description,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 11,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const Spacer(),
                     Row(
@@ -228,7 +298,29 @@ class ItemsListView extends GetView<ItemsController> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            item.user.name,
+                            item.user?.name ?? 'غير محدد',
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 10,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.category_outlined,
+                          size: 12,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            item.category?.name ?? 'غير محدد',
                             style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 10,
@@ -245,6 +337,30 @@ class ItemsListView extends GetView<ItemsController> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDefaultImage() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 40,
+            color: AppTheme.primaryGreen,
+          ),
+          SizedBox(height: 8),
+          Text(
+            '0 ₪',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryGreen,
+            ),
+          ),
+        ],
       ),
     );
   }

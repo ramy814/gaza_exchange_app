@@ -4,6 +4,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'dart:io';
 import '../controllers/add_property_controller.dart';
+import '../../../core/utils/app_theme.dart';
 
 class AddPropertyView extends GetView<AddPropertyController> {
   const AddPropertyView({super.key});
@@ -13,7 +14,11 @@ class AddPropertyView extends GetView<AddPropertyController> {
     Get.put(AddPropertyController());
 
     return Scaffold(
-      appBar: AppBar(title: const Text('إضافة عقار جديد')),
+      appBar: AppBar(
+        title: const Text('إضافة عقار جديد'),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: FormBuilder(

@@ -1,6 +1,6 @@
 class RecentActivityModel {
   final int id;
-  final String type;
+  final String type; // 'item' or 'property'
   final String title;
   final String price;
   final String status;
@@ -20,23 +20,28 @@ class RecentActivityModel {
       id: json['id'] ?? 0,
       type: json['type'] ?? '',
       title: json['title'] ?? '',
-      price: json['price'] ?? '0.00',
+      price: json['price']?.toString() ?? '0.00',
       status: json['status'] ?? '',
-      createdAt: DateTime.parse(
-          json['created_at'] ?? DateTime.now().toIso8601String()),
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at']) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 
-  String get typeInArabic {
-    switch (type) {
-      case 'item':
-        return 'سلعة';
-      case 'property':
-        return 'عقار';
-      default:
-        return type;
-    }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type,
+      'title': title,
+      'price': price,
+      'status': status,
+      'created_at': createdAt.toIso8601String(),
+    };
   }
+
+  bool get isItem => type == 'item';
+  bool get isProperty => type == 'property';
+  String get typeText => isItem ? 'سلعة' : 'عقار';
 
   String get statusInArabic {
     switch (status) {

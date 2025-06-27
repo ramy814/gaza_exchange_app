@@ -16,6 +16,8 @@ class ProfileView extends GetView<ProfileController> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('الملف الشخصي'),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
@@ -23,6 +25,7 @@ class ProfileView extends GetView<ProfileController> {
               Get.snackbar('قريباً', 'ميزة تعديل الملف الشخصي قريباً');
             },
             icon: const Icon(Icons.edit),
+            color: Colors.white,
           ),
         ],
       ),

@@ -6,6 +6,7 @@ import '../../../widgets/bottom_nav_bar.dart';
 import '../../../core/utils/app_theme.dart';
 import 'package:gaza_exchange_app/core/models/recent_activity_model.dart';
 import 'package:gaza_exchange_app/features/items/models/item_model.dart';
+import '../../../core/services/exchange_rate_service.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -32,16 +33,18 @@ class HomeView extends GetView<HomeController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildWelcomeSection(controller),
+                      _buildAnimatedWelcomeSection(controller),
                       const SizedBox(height: 24),
-                      _buildQuickActions(controller),
+                      _buildCurrencyExchangeSection(),
+                      const SizedBox(height: 24),
+                      _buildAnimatedQuickActions(controller),
                       const SizedBox(height: 24),
                       _buildStatisticsSection(controller),
                       const SizedBox(height: 24),
                       _buildRecentActivitySection(controller),
                       const SizedBox(height: 24),
                       _buildTrendingItemsSection(controller),
-                      const SizedBox(height: 100), // Extra space for bottom nav
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),
@@ -69,13 +72,7 @@ class HomeView extends GetView<HomeController> {
           }
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _showAddItemDialog(context);
-        },
-        label: const Text('إضافة إعلان'),
-        icon: const Icon(Icons.add),
-      ),
+      floatingActionButton: _buildAnimatedFAB(),
     );
   }
 
@@ -151,23 +148,10 @@ class HomeView extends GetView<HomeController> {
           titlePadding: const EdgeInsets.only(right: 16, bottom: 16),
           title: Row(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.home_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 8),
+            children: const [
               Text(
                 'منصة تبادل السلع والعقارات',
-                style: Get.textTheme.titleLarge?.copyWith(
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
@@ -240,197 +224,668 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  Widget _buildWelcomeSection(HomeController controller) {
+  Widget _buildAnimatedWelcomeSection(HomeController controller) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 1200),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 20 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    Colors.white,
+                    AppTheme.primaryColor.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Welcome Icon
+                  TweenAnimationBuilder<double>(
+                    duration: const Duration(milliseconds: 1800),
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    builder: (context, animValue, child) {
+                      return Transform.rotate(
+                        angle: animValue * 0.1,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppTheme.primaryColor.withValues(alpha: 0.2),
+                                AppTheme.accentColor.withValues(alpha: 0.1),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.waving_hand,
+                            size: 24,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  // Welcome Text
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'أهلاً وسهلاً',
+                              style: Get.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Obx(() {
+                              final userName =
+                                  controller.user.value?.name ?? 'المستخدم';
+                              return Text(
+                                userName,
+                                style: Get.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textColor,
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.local_fire_department,
+                              color: Colors.orange,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'اكتشف أفضل الصفقات المتاحة',
+                                style: Get.textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey[600],
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Status Badge
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryColor.withValues(alpha: 0.1),
+                          AppTheme.accentColor.withValues(alpha: 0.1),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'متصل',
+                          style: Get.textTheme.bodySmall?.copyWith(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCurrencyExchangeSection() {
+    return GetBuilder<ExchangeRateService>(
+      init: ExchangeRateService(),
+      builder: (exchangeService) {
+        return TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 1400),
+          tween: Tween(begin: 0.0, end: 1.0),
+          builder: (context, value, child) {
+            return Transform.translate(
+              offset: Offset(0, 30 * (1 - value)),
+              child: Opacity(
+                opacity: value,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                      colors: [
+                        Colors.green.withValues(alpha: 0.08),
+                        Colors.blue.withValues(alpha: 0.05),
+                        Colors.white,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.green.withValues(alpha: 0.2),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.green.withValues(alpha: 0.2),
+                                  Colors.blue.withValues(alpha: 0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Obx(() => exchangeService.isLoading
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor:
+                                          AlwaysStoppedAnimation(Colors.green),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.currency_exchange,
+                                    color: Colors.green,
+                                    size: 20,
+                                  )),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'أسعار الصرف',
+                            style: Get.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () async {
+                              await exchangeService.retry();
+                              exchangeService.update();
+                            },
+                            child: Obx(() => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: exchangeService.error.isEmpty
+                                        ? Colors.green.withValues(alpha: 0.1)
+                                        : Colors.orange.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        exchangeService.error.isEmpty
+                                            ? Icons.check_circle
+                                            : Icons.refresh,
+                                        size: 12,
+                                        color: exchangeService.error.isEmpty
+                                            ? Colors.green[700]
+                                            : Colors.orange[700],
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        exchangeService.error.isEmpty
+                                            ? 'محدث'
+                                            : 'إعادة',
+                                        style:
+                                            Get.textTheme.bodySmall?.copyWith(
+                                          color: exchangeService.error.isEmpty
+                                              ? Colors.green[700]
+                                              : Colors.orange[700],
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )),
+                          ),
+                        ],
+                      ),
+                      Obx(() => exchangeService.error.isNotEmpty
+                          ? Column(
+                              children: [
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    exchangeService.error,
+                                    style: Get.textTheme.bodySmall?.copyWith(
+                                      color: Colors.orange[700],
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : const SizedBox.shrink()),
+                      const SizedBox(height: 12),
+                      // Currency Cards Row
+                      Obx(() => Row(
+                            children: [
+                              Expanded(
+                                child: _buildCompactCurrencyCard(
+                                  'USD',
+                                  '🇺🇸',
+                                  exchangeService
+                                      .getRate('USD', 'buy')
+                                      .toStringAsFixed(2),
+                                  exchangeService
+                                      .getRate('USD', 'sell')
+                                      .toStringAsFixed(2),
+                                  Colors.green,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildCompactCurrencyCard(
+                                  'JOD',
+                                  '🇯🇴',
+                                  exchangeService
+                                      .getRate('JOD', 'buy')
+                                      .toStringAsFixed(2),
+                                  exchangeService
+                                      .getRate('JOD', 'sell')
+                                      .toStringAsFixed(2),
+                                  Colors.blue,
+                                ),
+                              ),
+                            ],
+                          )),
+                      const SizedBox(height: 8),
+                      // Last Update Info
+                      Obx(() => Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                size: 12,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'آخر تحديث: ${exchangeService.formattedLastUpdate}',
+                                style: Get.textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey[600],
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCompactCurrencyCard(
+    String currencyCode,
+    String flag,
+    String buyPrice,
+    String sellPrice,
+    Color color,
+  ) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            Colors.white,
-            AppTheme.primaryColor.withValues(alpha: 0.05),
-          ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
         ),
-        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: color.withValues(alpha: 0.1),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
+          // Currency Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                flag,
+                style: const TextStyle(fontSize: 20),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                currencyCode,
+                style: Get.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Buy/Sell Row
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.arrow_downward,
+                          color: Colors.red[600],
+                          size: 12,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          'شراء',
+                          style: Get.textTheme.bodySmall?.copyWith(
+                            color: Colors.red[600],
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      buyPrice,
+                      style: Get.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 30,
+                color: Colors.grey[300],
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.arrow_upward,
+                          color: Colors.green[600],
+                          size: 12,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          'بيع',
+                          style: Get.textTheme.bodySmall?.copyWith(
+                            color: Colors.green[600],
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      sellPrice,
+                      style: Get.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedQuickActions(HomeController controller) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 1500),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 50 * (1 - value)),
+          child: Opacity(
+            opacity: value,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'أهلاً وسهلاً',
-                  style: Get.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Obx(() {
-                  final userName = controller.user.value?.name ?? 'المستخدم';
-                  return Text(
-                    userName,
-                    style: Get.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textColor,
+                Row(
+                  children: [
+                    Icon(
+                      Icons.flash_on,
+                      color: AppTheme.primaryColor,
+                      size: 28,
                     ),
-                  );
-                }),
+                    const SizedBox(width: 8),
+                    Text(
+                      'الإجراءات السريعة',
+                      style: Get.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildAnimatedActionCard(
+                        'إضافة سلعة',
+                        Icons.add_shopping_cart,
+                        AppTheme.primaryColor,
+                        controller.goToAddItem,
+                        0,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildAnimatedActionCard(
+                        'إضافة عقار',
+                        Icons.home_work,
+                        AppTheme.accentColor,
+                        controller.goToAddProperty,
+                        200,
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
-                Text(
-                  'اكتشف أفضل الصفقات والعروض المتاحة',
-                  style: Get.textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                    height: 1.4,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildAnimatedActionCard(
+                        'تصفح السلع',
+                        Icons.store,
+                        Colors.green,
+                        controller.goToItems,
+                        400,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildAnimatedActionCard(
+                        'تصفح العقارات',
+                        Icons.location_city,
+                        Colors.orange,
+                        controller.goToProperties,
+                        600,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryColor.withValues(alpha: 0.1),
-                  AppTheme.accentColor.withValues(alpha: 0.1),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedActionCard(
+      String title, IconData icon, Color color, VoidCallback onTap, int delay) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 800 + delay),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.8 + (0.2 * value),
+          child: GestureDetector(
+            onTap: onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    color.withValues(alpha: 0.15),
+                    color.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: color.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              Icons.waving_hand_rounded,
-              size: 40,
-              color: AppTheme.primaryColor,
+              child: Column(
+                children: [
+                  TweenAnimationBuilder<double>(
+                    duration: Duration(milliseconds: 1000 + delay),
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    builder: (context, animValue, child) {
+                      return Transform.rotate(
+                        angle: animValue * 0.1,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                color.withValues(alpha: 0.3),
+                                color.withValues(alpha: 0.2),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            icon,
+                            color: color,
+                            size: 32,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    title,
+                    style: Get.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActions(HomeController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'الإجراءات السريعة',
-          style: Get.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionCard(
-                'إضافة سلعة',
-                Icons.add_box_rounded,
-                AppTheme.primaryColor,
-                controller.goToAddItem,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildActionCard(
-                'إضافة عقار',
-                Icons.add_home_rounded,
-                AppTheme.accentColor,
-                controller.goToAddProperty,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionCard(
-                'تصفح السلع',
-                Icons.inventory_rounded,
-                Colors.green,
-                controller.goToItems,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildActionCard(
-                'تصفح العقارات',
-                Icons.home_work_rounded,
-                Colors.orange,
-                controller.goToProperties,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionCard(
-      String title, IconData icon, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              color.withValues(alpha: 0.1),
-              color.withValues(alpha: 0.05),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withValues(alpha: 0.2),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: Get.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -776,7 +1231,7 @@ class HomeView extends GetView<HomeController> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        activity.typeInArabic,
+                        activity.typeText,
                         style: Get.textTheme.bodySmall?.copyWith(
                           color: activity.type == 'item'
                               ? AppTheme.primaryColor
@@ -944,13 +1399,16 @@ class HomeView extends GetView<HomeController> {
                   ClipRRect(
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: item.image.isNotEmpty
+                    child: (item.fullImageUrl != null &&
+                            item.fullImageUrl!.isNotEmpty)
                         ? Image.network(
-                            item.image,
+                            item.fullImageUrl!,
                             width: double.infinity,
                             height: 120,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
+                              print('❌ Error loading image: $error');
+                              print('❌ Image URL: ${item.fullImageUrl}');
                               return Container(
                                 color: Colors.grey[200],
                                 child: Icon(
@@ -1157,6 +1615,36 @@ class HomeView extends GetView<HomeController> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAnimatedFAB() {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(seconds: 2),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.8 + (0.2 * value),
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              _showAddItemDialog(context);
+            },
+            label: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(
+                  Icons.add_circle_outline,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 8),
+                Text('إضافة إعلان'),
+              ],
+            ),
+            backgroundColor: AppTheme.primaryColor,
+            elevation: 8,
+          ),
+        );
+      },
     );
   }
 }

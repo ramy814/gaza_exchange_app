@@ -4,6 +4,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'dart:io';
 import '../controllers/add_item_controller.dart';
+import '../../../core/utils/app_theme.dart';
 
 class AddItemView extends GetView<AddItemController> {
   const AddItemView({super.key});
@@ -13,7 +14,11 @@ class AddItemView extends GetView<AddItemController> {
     Get.put(AddItemController());
 
     return Scaffold(
-      appBar: AppBar(title: const Text('إضافة سلعة جديدة')),
+      appBar: AppBar(
+        title: const Text('إضافة سلعة جديدة'),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: FormBuilder(
@@ -23,6 +28,14 @@ class AddItemView extends GetView<AddItemController> {
             children: [
               // Images Section
               Text('صور السلعة', style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 4),
+              Text(
+                'ملاحظة: سيتم رفع الصورة الأولى فقط',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+              ),
               const SizedBox(height: 12),
 
               Obx(

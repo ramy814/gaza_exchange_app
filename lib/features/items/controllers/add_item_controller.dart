@@ -11,7 +11,7 @@ class AddItemController extends GetxController {
   final RxList<File> _selectedImages = <File>[].obs;
   final RxBool _isLoading = false.obs;
 
-  List<File> get selectedImages => _selectedImages;
+  RxList<File> get selectedImages => _selectedImages;
   bool get isLoading => _isLoading.value;
 
   final List<String> categories = [
@@ -32,6 +32,39 @@ class AddItemController extends GetxController {
     'مستعمل - جيد',
     'مستعمل - مقبول',
   ];
+
+  // دالة لتحويل الأرقام العربية إلى الإنجليزية
+  String convertArabicToEnglishNumbers(String input) {
+    if (input.isEmpty) return input;
+
+    const Map<String, String> arabicToEnglish = {
+      '٠': '0',
+      '١': '1',
+      '٢': '2',
+      '٣': '3',
+      '٤': '4',
+      '٥': '5',
+      '٦': '6',
+      '٧': '7',
+      '٨': '8',
+      '٩': '9',
+    };
+
+    String result = input;
+    arabicToEnglish.forEach((arabic, english) {
+      result = result.replaceAll(arabic, english);
+    });
+
+    // إزالة أي أحرف غير رقمية باستثناء النقطة العشرية
+    result = result.replaceAll(RegExp(r'[^\d.]'), '');
+
+    // التأكد من وجود رقم واحد على الأقل
+    if (result.isEmpty || result == '.') {
+      result = '0';
+    }
+
+    return result;
+  }
 
   Future<void> pickImage() async {
     if (_selectedImages.length >= 5) {
@@ -62,7 +95,14 @@ class AddItemController extends GetxController {
     );
 
     if (image != null) {
-      _selectedImages.add(File(image.path));
+      final file = File(image.path);
+      _selectedImages.add(file);
+
+      print('=== Image Selected ===');
+      print('Image path: ${image.path}');
+      print('File exists: ${file.existsSync()}');
+      print('File size: ${file.lengthSync()} bytes');
+      print('Total selected images: ${_selectedImages.length}');
     }
   }
 
@@ -99,28 +139,75 @@ class AddItemController extends GetxController {
 
       final values = formKey.currentState!.value;
 
+      // تحويل السعر من العربية إلى الإنجليزية
+      final originalPrice = values['price']?.toString() ?? '0';
+      final priceStr = convertArabicToEnglishNumbers(originalPrice);
+      final price = double.tryParse(priceStr) ?? 0.0;
+
+      print('=== Item Price Conversion ===');
+      print('Original price: $originalPrice');
+      print('Converted price: $priceStr');
+      print('Final price: $price');
+
+      // التحقق من صحة السعر
+      if (price <= 0) {
+        Get.snackbar(
+          '❌ خطأ في السعر',
+          'يرجى إدخال سعر صحيح أكبر من صفر',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
       // Create FormData for file upload
       final formData = dio.FormData.fromMap({
         'title': values['title'],
         'description': values['description'],
         'category': values['category'],
         'condition': values['condition'],
-        'price': values['price'],
+        'price': price, // استخدام السعر المحول
         'exchange_for': values['exchange_for'] ?? '',
         'location': values['location'],
+        'status': 'available', // إضافة حالة السلعة
+        'category_id': 1, // إضافة معرف التصنيف (سيتم تحديثه لاحقاً)
+        'subcategory_id': 1, // إضافة معرف التصنيف الفرعي (سيتم تحديثه لاحقاً)
+        'latitude': 31.5017, // إضافة خط العرض (سيتم تحديثه لاحقاً)
+        'longitude': 34.4668, // إضافة خط الطول (سيتم تحديثه لاحقاً)
+        'location_name': values['location'], // استخدام الموقع المدخل
       });
 
-      // Add images
-      for (int i = 0; i < _selectedImages.length; i++) {
+      // Add images - API expects only one image
+      if (_selectedImages.isNotEmpty) {
+        final file = await dio.MultipartFile.fromFile(
+          _selectedImages[0].path, // إرسال الصورة الأولى فقط
+          filename: 'item_image.jpg',
+        );
         formData.files.add(
           MapEntry(
-            'images[]',
-            await dio.MultipartFile.fromFile(_selectedImages[i].path),
+            'image',
+            file,
           ),
         );
       }
 
+      print('=== Item FormData Details ===');
+      print('FormData fields: ${formData.fields}');
+      print('FormData files count: ${formData.files.length}');
+      for (var field in formData.fields) {
+        print('Field: ${field.key} = ${field.value}');
+      }
+      for (var file in formData.files) {
+        print(
+            'File: ${file.key} = ${file.value.filename} (${file.value.length} bytes)');
+      }
+
+      // إرسال البيانات مع Content-Type الصحيح للملفات
       final response = await ApiService.to.post('items', data: formData);
+
+      print('=== API Response ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Data: ${response.data}');
 
       if (response.statusCode == 201) {
         Get.back();
@@ -146,11 +233,30 @@ class AddItemController extends GetxController {
             ),
           ),
         );
+      } else {
+        print('=== API Error ===');
+        print('Unexpected status code: ${response.statusCode}');
+        print('Response data: ${response.data}');
+        throw Exception('API returned status code: ${response.statusCode}');
       }
     } catch (e) {
+      print('=== Error Details ===');
+      print('Error type: ${e.runtimeType}');
+      print('Error message: $e');
+
+      String errorMessage = 'فشل في إضافة السلعة، يرجى المحاولة مرة أخرى';
+
+      if (e.toString().contains('422')) {
+        errorMessage = 'بيانات غير صحيحة، يرجى التحقق من المعلومات المدخلة';
+      } else if (e.toString().contains('401')) {
+        errorMessage = 'جلسة منتهية، يرجى تسجيل الدخول مرة أخرى';
+      } else if (e.toString().contains('500')) {
+        errorMessage = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
+      }
+
       Get.snackbar(
         '❌ حدث خطأ',
-        'فشل في إضافة السلعة، يرجى المحاولة مرة أخرى',
+        errorMessage,
         backgroundColor: Colors.red,
         colorText: Colors.white,
         duration: const Duration(seconds: 4),

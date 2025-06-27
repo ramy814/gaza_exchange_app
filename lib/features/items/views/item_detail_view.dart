@@ -26,39 +26,29 @@ class ItemDetailView extends GetView<ItemDetailController> {
 
         return Column(
           children: [
-            // Image Gallery
+            // صورة العقار
             Container(
               width: double.infinity,
               height: 250,
-              child: item.image.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: item.image,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[200],
-                        child: const Center(
-                          child: CircularProgressIndicator(),
+              color: Colors.grey[200],
+              child:
+                  (item.fullImageUrl != null && item.fullImageUrl!.isNotEmpty)
+                      ? Image.network(
+                          item.fullImageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('❌ Error loading image: $error');
+                            print('❌ Image URL: ${item.fullImageUrl}');
+                            return const Center(
+                              child: Icon(Icons.home_outlined,
+                                  size: 60, color: Colors.grey),
+                            );
+                          },
+                        )
+                      : const Center(
+                          child: Icon(Icons.home_outlined,
+                              size: 60, color: Colors.grey),
                         ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    )
-                  : Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: Icon(
-                          Icons.category,
-                          size: 80,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
             ),
 
             // Item Details
@@ -185,8 +175,9 @@ class ItemDetailView extends GetView<ItemDetailController> {
                                   backgroundColor:
                                       Theme.of(context).primaryColor,
                                   child: Text(
-                                    item.user.name.isNotEmpty
-                                        ? item.user.name[0].toUpperCase()
+                                    (item.user?.name != null &&
+                                            item.user!.name.isNotEmpty)
+                                        ? item.user!.name[0].toUpperCase()
                                         : 'U',
                                     style: const TextStyle(
                                       color: Colors.white,
@@ -201,13 +192,13 @@ class ItemDetailView extends GetView<ItemDetailController> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        item.user.name,
+                                        item.user?.name ?? 'غير محدد',
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleMedium,
                                       ),
                                       Text(
-                                        'منذ ${_formatDate(item.createdAt)}',
+                                        'منذ ${_formatDate(item.createdAt ?? DateTime.now())}',
                                         style: TextStyle(
                                           color: Colors.grey[600],
                                         ),

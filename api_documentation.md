@@ -136,6 +136,9 @@
         "id": 1,
         "name": "أحمد محمد",
         "phone": "0599123456",
+        "latitude": 31.5017,
+        "longitude": 34.4668,
+        "location_name": "غزة، فلسطين",
         "created_at": "2025-01-20T10:30:00.000000Z",
         "updated_at": "2025-01-20T10:30:00.000000Z",
         "items": [
@@ -229,11 +232,281 @@
 
 ---
 
+### 4. تحديث موقع المستخدم
+
+**PUT** `/user/location`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**المعاملات:**
+```json
+{
+    "latitude": 31.5017,
+    "longitude": 34.4668,
+    "location_name": "غزة، فلسطين"
+}
+```
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "message": "Location updated successfully",
+    "user": {
+        "id": 1,
+        "name": "أحمد محمد",
+        "latitude": 31.5017,
+        "longitude": 34.4668,
+        "location_name": "غزة، فلسطين"
+    }
+}
+```
+
+---
+
+## 📂 APIs التصنيفات (Categories)
+
+### 1. عرض جميع التصنيفات الرئيسية
+
+**GET** `/categories`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "categories": [
+        {
+            "id": 1,
+            "name": "الإلكترونيات",
+            "name_en": "Electronics",
+            "description": "جميع أنواع الأجهزة الإلكترونية والكهربائية",
+            "icon": "fas fa-laptop",
+            "color": "#007bff",
+            "is_active": true,
+            "sort_order": 1,
+            "children": [
+                {
+                    "id": 7,
+                    "name": "الهواتف الذكية",
+                    "name_en": "Smartphones",
+                    "icon": "fas fa-mobile-alt",
+                    "parent_id": 1,
+                    "sort_order": 1
+                },
+                {
+                    "id": 8,
+                    "name": "الحواسيب المحمولة",
+                    "name_en": "Laptops",
+                    "icon": "fas fa-laptop",
+                    "parent_id": 1,
+                    "sort_order": 2
+                }
+            ]
+        }
+    ]
+}
+```
+
+---
+
+### 2. عرض التصنيفات الرئيسية فقط
+
+**GET** `/categories/main`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "main_categories": [
+        {
+            "id": 1,
+            "name": "الإلكترونيات",
+            "name_en": "Electronics",
+            "description": "جميع أنواع الأجهزة الإلكترونية والكهربائية",
+            "icon": "fas fa-laptop",
+            "color": "#007bff",
+            "children": [...]
+        }
+    ]
+}
+```
+
+---
+
+### 3. عرض تصنيف محدد
+
+**GET** `/categories/{id}`
+
+**مثال:** `/categories/1`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "category": {
+        "id": 1,
+        "name": "الإلكترونيات",
+        "name_en": "Electronics",
+        "description": "جميع أنواع الأجهزة الإلكترونية والكهربائية",
+        "icon": "fas fa-laptop",
+        "color": "#007bff",
+        "is_active": true,
+        "sort_order": 1,
+        "children": [...],
+        "parent": null
+    }
+}
+```
+
+---
+
+### 4. عرض التصنيفات الفرعية
+
+**GET** `/categories/{id}/subcategories`
+
+**مثال:** `/categories/1/subcategories`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "parent_category": {
+        "id": 1,
+        "name": "الإلكترونيات",
+        "name_en": "Electronics"
+    },
+    "subcategories": [
+        {
+            "id": 7,
+            "name": "الهواتف الذكية",
+            "name_en": "Smartphones",
+            "icon": "fas fa-mobile-alt",
+            "parent_id": 1,
+            "sort_order": 1
+        }
+    ]
+}
+```
+
+---
+
+### 5. البحث في التصنيفات
+
+**GET** `/categories/search?q=هاتف`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "categories": [
+        {
+            "id": 7,
+            "name": "الهواتف الذكية",
+            "name_en": "Smartphones",
+            "parent": {
+                "id": 1,
+                "name": "الإلكترونيات"
+            }
+        }
+    ]
+}
+```
+
+---
+
+### 6. إنشاء تصنيف جديد (محمي)
+
+**POST** `/categories`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**المعاملات:**
+```json
+{
+    "name": "تصنيف جديد",
+    "name_en": "New Category",
+    "description": "وصف التصنيف",
+    "icon": "fas fa-star",
+    "color": "#ff0000",
+    "parent_id": null,
+    "is_active": true,
+    "sort_order": 1
+}
+```
+
+**الاستجابة الناجحة (201):**
+```json
+{
+    "message": "Category created successfully",
+    "category": {
+        "id": 10,
+        "name": "تصنيف جديد",
+        "name_en": "New Category",
+        "description": "وصف التصنيف",
+        "icon": "fas fa-star",
+        "color": "#ff0000",
+        "parent_id": null,
+        "is_active": true,
+        "sort_order": 1
+    }
+}
+```
+
+---
+
+### 7. تحديث تصنيف (محمي)
+
+**PUT** `/categories/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**المعاملات:**
+```json
+{
+    "name": "تصنيف محدث",
+    "color": "#00ff00"
+}
+```
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "message": "Category updated successfully",
+    "category": {
+        "id": 10,
+        "name": "تصنيف محدث",
+        "color": "#00ff00"
+    }
+}
+```
+
+---
+
+### 8. حذف تصنيف (محمي)
+
+**DELETE** `/categories/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "message": "Category deleted successfully"
+}
+```
+
+---
+
 ## 📦 APIs السلع (Items)
 
 ### 1. عرض جميع السلع
 
 **GET** `/items`
+
+**المعاملات الاختيارية:**
+- `category_id`: تصفية حسب التصنيف الرئيسي
+- `subcategory_id`: تصفية حسب التصنيف الفرعي
+- `status`: تصفية حسب الحالة (available, sold)
+- `min_price`: الحد الأدنى للسعر
+- `max_price`: الحد الأقصى للسعر
+- `search`: البحث في العنوان والوصف
+- `latitude`, `longitude`, `radius`: البحث حسب الموقع
+
+**مثال:** `/items?category_id=1&min_price=500&max_price=2000&search=هاتف`
 
 **الاستجابة الناجحة (200):**
 ```json
@@ -247,12 +520,27 @@
         "price": "1200.00",
         "exchange_for": null,
         "status": "available",
+        "category_id": 1,
+        "subcategory_id": 8,
+        "latitude": 31.5017,
+        "longitude": 34.4668,
+        "location_name": "غزة، فلسطين",
         "created_at": "2025-01-20T10:30:00.000000Z",
         "updated_at": "2025-01-20T10:30:00.000000Z",
         "user": {
             "id": 1,
             "name": "أحمد محمد",
             "phone": "0599123456"
+        },
+        "category": {
+            "id": 1,
+            "name": "الإلكترونيات",
+            "name_en": "Electronics"
+        },
+        "subcategory": {
+            "id": 8,
+            "name": "الحواسيب المحمولة",
+            "name_en": "Laptops"
         }
     }
 ]
@@ -260,7 +548,47 @@
 
 ---
 
-### 2. عرض السلع الرائجة
+### 2. عرض السلع القريبة
+
+**GET** `/items/nearby`
+
+**المعاملات المطلوبة:**
+- `latitude`: خط العرض
+- `longitude`: خط الطول
+- `radius`: نصف القطر بالكيلومترات (اختياري، افتراضي 10)
+
+**مثال:** `/items/nearby?latitude=31.5017&longitude=34.4668&radius=5`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "nearby_items": [
+        {
+            "id": 1,
+            "title": "جهاز كمبيوتر محمول",
+            "price": "1200.00",
+            "distance": 2.5,
+            "user": {
+                "id": 1,
+                "name": "أحمد محمد"
+            },
+            "category": {
+                "id": 1,
+                "name": "الإلكترونيات"
+            }
+        }
+    ],
+    "search_location": {
+        "latitude": 31.5017,
+        "longitude": 34.4668,
+        "radius_km": 5
+    }
+}
+```
+
+---
+
+### 3. عرض السلع الرائجة
 
 **GET** `/items/trending`
 
@@ -277,29 +605,27 @@
             "price": "800.00",
             "exchange_for": null,
             "status": "available",
+            "category_id": 1,
+            "subcategory_id": 7,
+            "latitude": 31.5017,
+            "longitude": 34.4668,
+            "location_name": "غزة، فلسطين",
             "created_at": "2025-01-20T15:30:00.000000Z",
             "updated_at": "2025-01-20T15:30:00.000000Z",
             "user": {
                 "id": 1,
                 "name": "أحمد محمد",
                 "phone": "0599123456"
-            }
-        },
-        {
-            "id": 2,
-            "user_id": 2,
-            "title": "جهاز لابتوب Dell",
-            "description": "جهاز لابتوب Dell بحالة ممتازة",
-            "image": "items/laptop_dell.jpg",
-            "price": "1200.00",
-            "exchange_for": null,
-            "status": "available",
-            "created_at": "2025-01-20T14:20:00.000000Z",
-            "updated_at": "2025-01-20T14:20:00.000000Z",
-            "user": {
-                "id": 2,
-                "name": "محمد علي",
-                "phone": "0598765432"
+            },
+            "category": {
+                "id": 1,
+                "name": "الإلكترونيات",
+                "name_en": "Electronics"
+            },
+            "subcategory": {
+                "id": 7,
+                "name": "الهواتف الذكية",
+                "name_en": "Smartphones"
             }
         }
     ]
@@ -313,7 +639,7 @@
 
 ---
 
-### 3. عرض سلعة محددة
+### 4. عرض سلعة محددة
 
 **GET** `/items/{id}`
 
@@ -330,19 +656,34 @@
     "price": "1200.00",
     "exchange_for": null,
     "status": "available",
+    "category_id": 1,
+    "subcategory_id": 8,
+    "latitude": 31.5017,
+    "longitude": 34.4668,
+    "location_name": "غزة، فلسطين",
     "created_at": "2025-01-20T10:30:00.000000Z",
     "updated_at": "2025-01-20T10:30:00.000000Z",
     "user": {
         "id": 1,
         "name": "أحمد محمد",
         "phone": "0599123456"
+    },
+    "category": {
+        "id": 1,
+        "name": "الإلكترونيات",
+        "name_en": "Electronics"
+    },
+    "subcategory": {
+        "id": 8,
+        "name": "الحواسيب المحمولة",
+        "name_en": "Laptops"
     }
 }
 ```
 
 ---
 
-### 4. إضافة سلعة جديدة
+### 5. إضافة سلعة جديدة
 
 **POST** `/items`
 
@@ -356,7 +697,12 @@
     "image": "[ملف الصورة]",
     "price": 800.00,
     "exchange_for": "Samsung Galaxy S22",
-    "status": "available"
+    "status": "available",
+    "category_id": 1,
+    "subcategory_id": 7,
+    "latitude": 31.5017,
+    "longitude": 34.4668,
+    "location_name": "غزة، فلسطين"
 }
 ```
 
@@ -373,12 +719,27 @@
         "price": "800.00",
         "exchange_for": "Samsung Galaxy S22",
         "status": "available",
+        "category_id": 1,
+        "subcategory_id": 7,
+        "latitude": 31.5017,
+        "longitude": 34.4668,
+        "location_name": "غزة، فلسطين",
         "created_at": "2025-01-20T11:00:00.000000Z",
         "updated_at": "2025-01-20T11:00:00.000000Z",
         "user": {
             "id": 1,
             "name": "أحمد محمد",
             "phone": "0599123456"
+        },
+        "category": {
+            "id": 1,
+            "name": "الإلكترونيات",
+            "name_en": "Electronics"
+        },
+        "subcategory": {
+            "id": 7,
+            "name": "الهواتف الذكية",
+            "name_en": "Smartphones"
         }
     }
 }
@@ -386,7 +747,7 @@
 
 ---
 
-### 5. تحديث سلعة
+### 6. تحديث سلعة
 
 **PUT** `/items/{id}`
 
@@ -400,7 +761,12 @@
     "image": "[ملف الصورة الجديد]",
     "price": 850.00,
     "exchange_for": "Samsung Galaxy S23",
-    "status": "sold"
+    "status": "sold",
+    "category_id": 1,
+    "subcategory_id": 7,
+    "latitude": 31.5017,
+    "longitude": 34.4668,
+    "location_name": "غزة، فلسطين"
 }
 ```
 
@@ -417,12 +783,27 @@
         "price": "850.00",
         "exchange_for": "Samsung Galaxy S23",
         "status": "sold",
+        "category_id": 1,
+        "subcategory_id": 7,
+        "latitude": 31.5017,
+        "longitude": 34.4668,
+        "location_name": "غزة، فلسطين",
         "created_at": "2025-01-20T11:00:00.000000Z",
         "updated_at": "2025-01-20T11:30:00.000000Z",
         "user": {
             "id": 1,
             "name": "أحمد محمد",
             "phone": "0599123456"
+        },
+        "category": {
+            "id": 1,
+            "name": "الإلكترونيات",
+            "name_en": "Electronics"
+        },
+        "subcategory": {
+            "id": 7,
+            "name": "الهواتف الذكية",
+            "name_en": "Smartphones"
         }
     }
 }
@@ -430,7 +811,7 @@
 
 ---
 
-### 6. حذف سلعة
+### 7. حذف سلعة
 
 **DELETE** `/items/{id}`
 
@@ -467,6 +848,9 @@
         "price": "85000.00",
         "address": "حي الرمال، شارع عمر المختار",
         "type": "buy",
+        "latitude": 31.5017,
+        "longitude": 34.4668,
+        "location_name": "غزة، فلسطين",
         "created_at": "2025-01-20T10:30:00.000000Z",
         "updated_at": "2025-01-20T10:30:00.000000Z",
         "user": {
@@ -497,6 +881,9 @@
     "price": "85000.00",
     "address": "حي الرمال، شارع عمر المختار",
     "type": "buy",
+    "latitude": 31.5017,
+    "longitude": 34.4668,
+    "location_name": "غزة، فلسطين",
     "created_at": "2025-01-20T10:30:00.000000Z",
     "updated_at": "2025-01-20T10:30:00.000000Z",
     "user": {
@@ -523,7 +910,10 @@
     "image": "[ملف الصورة]",
     "price": 120000.00,
     "address": "حي النصر، شارع فلسطين",
-    "type": "buy"
+    "type": "buy",
+    "latitude": 31.5017,
+    "longitude": 34.4668,
+    "location_name": "غزة، فلسطين"
 }
 ```
 
@@ -540,6 +930,9 @@
         "price": "120000.00",
         "address": "حي النصر، شارع فلسطين",
         "type": "buy",
+        "latitude": 31.5017,
+        "longitude": 34.4668,
+        "location_name": "غزة، فلسطين",
         "created_at": "2025-01-20T11:00:00.000000Z",
         "updated_at": "2025-01-20T11:00:00.000000Z",
         "user": {
@@ -567,7 +960,10 @@
     "image": "[ملف الصورة الجديد]",
     "price": 125000.00,
     "address": "حي النصر، شارع فلسطين - محدث",
-    "type": "buy"
+    "type": "buy",
+    "latitude": 31.5017,
+    "longitude": 34.4668,
+    "location_name": "غزة، فلسطين"
 }
 ```
 
@@ -584,6 +980,9 @@
         "price": "125000.00",
         "address": "حي النصر، شارع فلسطين - محدث",
         "type": "buy",
+        "latitude": 31.5017,
+        "longitude": 34.4668,
+        "location_name": "غزة، فلسطين",
         "created_at": "2025-01-20T11:00:00.000000Z",
         "updated_at": "2025-01-20T11:30:00.000000Z",
         "user": {
@@ -629,7 +1028,7 @@
 
 ## 🔧 أمثلة عملية للاستخدام
 
-### مثال 1: تسجيل مستخدم جديد وإضافة سلعة
+### مثال 1: تسجيل مستخدم جديد وإضافة سلعة مع التصنيف والموقع
 
 ```bash
 # 1. تسجيل مستخدم جديد
@@ -643,7 +1042,18 @@ curl -X POST http://localhost:8000/api/register \
     "password_confirmation": "password123"
   }'
 
-# 2. استخدام الـ token المُعاد لإضافة سلعة
+# 2. تحديث موقع المستخدم
+curl -X PUT http://localhost:8000/api/user/location \
+  -H "Authorization: Bearer 1|your-token-here" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "latitude": 31.5017,
+    "longitude": 34.4668,
+    "location_name": "غزة، فلسطين"
+  }'
+
+# 3. إضافة سلعة مع التصنيف والموقع
 curl -X POST http://localhost:8000/api/items \
   -H "Authorization: Bearer 1|your-token-here" \
   -H "Accept: application/json" \
@@ -651,26 +1061,39 @@ curl -X POST http://localhost:8000/api/items \
   -F "description=جهاز لابتوب بحالة ممتازة" \
   -F "price=1500" \
   -F "status=available" \
+  -F "category_id=1" \
+  -F "subcategory_id=8" \
+  -F "latitude=31.5017" \
+  -F "longitude=34.4668" \
+  -F "location_name=غزة، فلسطين" \
   -F "image=@/path/to/image.jpg"
 ```
 
-### مثال 2: البحث والفلترة
+### مثال 2: البحث والفلترة المتقدمة
 
 ```bash
-# عرض جميع السلع المتاحة
-curl -X GET "http://localhost:8000/api/items" \
+# عرض جميع السلع في تصنيف الإلكترونيات
+curl -X GET "http://localhost:8000/api/items?category_id=1" \
   -H "Accept: application/json"
 
-# عرض السلع الرائجة
-curl -X GET "http://localhost:8000/api/items/trending" \
+# البحث عن السلع القريبة
+curl -X GET "http://localhost:8000/api/items/nearby?latitude=31.5017&longitude=34.4668&radius=5" \
   -H "Accept: application/json"
 
-# عرض جميع العقارات للبيع
-curl -X GET "http://localhost:8000/api/properties" \
+# البحث في السلع حسب السعر والكلمة المفتاحية
+curl -X GET "http://localhost:8000/api/items?min_price=500&max_price=2000&search=هاتف" \
+  -H "Accept: application/json"
+
+# عرض التصنيفات الرئيسية
+curl -X GET "http://localhost:8000/api/categories/main" \
+  -H "Accept: application/json"
+
+# البحث في التصنيفات
+curl -X GET "http://localhost:8000/api/categories/search?q=هاتف" \
   -H "Accept: application/json"
 ```
 
-### مثال 3: عرض بيانات المستخدم
+### مثال 3: عرض بيانات المستخدم والموقع
 
 ```bash
 # عرض الملف الشخصي مع الإحصائيات
@@ -700,6 +1123,10 @@ curl -X GET "http://localhost:8000/api/user/recent-activity" \
 5. **الحماية**: جميع العمليات الخاصة تتطلب token صالح
 6. **السلع الرائجة**: تعرض السلع المتاحة من آخر 7 أيام، مع إمكانية إضافة سلع أقدم إذا لم تكن كافية
 7. **النشاط الأخير**: يعرض آخر 10 أنشطة للمستخدم (سلع وعقارات)
+8. **الموقع**: يدعم إحداثيات GPS مع اسم الموقع
+9. **التصنيفات**: نظام تصنيفات رئيسية وفرعية مع دعم الأيقونات والألوان
+10. **البحث الجغرافي**: يستخدم صيغة Haversine لحساب المسافات
+11. **الفلترة المتقدمة**: دعم الفلترة حسب التصنيف، السعر، الحالة، والموقع
 
 ---
 
@@ -744,5 +1171,5 @@ curl -X GET "http://localhost:8000/api/user/recent-activity" \
 ---
 
 **تم إنشاء هذا المستند في**: يناير 2025  
-**الإصدار**: 1.1  
+**الإصدار**: 2.0  
 **المطور**: Gaza Exchange Team

@@ -203,18 +203,23 @@ class PropertiesListView extends StatelessWidget {
                   children: [
                     // Image or placeholder
                     Center(
-                      child: property.image.isNotEmpty
+                      child: (property.fullImageUrl != null &&
+                              property.fullImageUrl!.isNotEmpty)
                           ? ClipRRect(
                               borderRadius: const BorderRadius.only(
                                 topLeft: Radius.circular(16),
                                 topRight: Radius.circular(16),
                               ),
                               child: Image.network(
-                                property.image,
+                                property.fullImageUrl!,
                                 width: double.infinity,
                                 height: double.infinity,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
+                                  print(
+                                      '❌ Error loading property image: $error');
+                                  print(
+                                      '❌ Property image URL: ${property.fullImageUrl}');
                                   return Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -369,7 +374,7 @@ class PropertiesListView extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            property.user.name,
+                            property.user?.name ?? 'غير محدد',
                             style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 10,

@@ -16,7 +16,7 @@ class AddPropertyController extends GetxController {
 
   final List<String> propertyTypes = ['شقة', 'منزل', 'تجاري', 'أرض'];
 
-  final List<String> purposes = ['إيجار', 'تبادل'];
+  final List<String> purposes = ['بيع', 'إيجار', 'تبادل'];
 
   // دالة محسنة لتحويل الأرقام العربية للإنجليزية
   String convertArabicToEnglishNumbers(String input) {
@@ -150,20 +150,45 @@ class AddPropertyController extends GetxController {
           convertArabicToEnglishNumbers(values['price']?.toString() ?? '0');
       final price = double.tryParse(priceStr) ?? 0.0;
 
-      // تحويل الغرض إلى نوع العقار حسب الـ API
-      String propertyType = 'buy'; // القيمة الافتراضية
-      if (values['purpose'] == 'إيجار') {
-        propertyType = 'rent';
+      // استخدام نوع العقار المحدد من المستخدم
+      final selectedType = values['type']?.toString() ?? 'شقة';
+
+      // تحويل نوع العقار إلى القيمة المتوقعة من API
+      String propertyType;
+      switch (selectedType) {
+        case 'شقة':
+          propertyType = 'apartment';
+          break;
+        case 'منزل':
+          propertyType = 'house';
+          break;
+        case 'تجاري':
+          propertyType = 'commercial';
+          break;
+        case 'أرض':
+          propertyType = 'land';
+          break;
+        default:
+          propertyType = 'apartment';
+      }
+
+      // تحويل الغرض إلى نوع العملية
+      String purposeType = 'buy'; // القيمة الافتراضية
+      if (values['purpose'] == 'بيع') {
+        purposeType = 'buy';
+      } else if (values['purpose'] == 'إيجار') {
+        purposeType = 'rent';
       } else if (values['purpose'] == 'تبادل') {
-        propertyType = 'exchange'; // أو 'buy' إذا لم يكن exchange مدعوم
+        purposeType = 'exchange';
       }
 
       // طباعة القيم للتأكد
       print('=== Property Data ===');
       print('Title: ${values['title']}');
       print('Description: ${values['description']}');
-      print('Address: ${values['location']}'); // سيتم إرسالها كـ address
-      print('Type: $propertyType (original purpose: ${values['purpose']})');
+      print('Address: ${values['location']}');
+      print('Property Type: $propertyType (original: $selectedType)');
+      print('Purpose Type: $purposeType (original: ${values['purpose']})');
       print('Price: $price (original: ${values['price']})');
       print('Images count: ${_selectedImages.length}');
 
@@ -171,10 +196,8 @@ class AddPropertyController extends GetxController {
       final formData = dio.FormData.fromMap({
         'title': values['title'].toString().trim(),
         'description': values['description'].toString().trim(),
-        'address': values['location']
-            .toString()
-            .trim(), // استخدام address بدلاً من location
-        'type': propertyType, // استخدام type بدلاً من purpose
+        'address': values['location'].toString().trim(),
+        'type': purposeType, // إرسال نوع العملية (بيع، إيجار، تبادل)
         'price': price,
       });
 
@@ -191,6 +214,13 @@ class AddPropertyController extends GetxController {
       print('=== Sending FormData ===');
       print('FormData fields: ${formData.fields}');
       print('FormData files: ${formData.files.length}');
+      print('=== Detailed FormData ===');
+      for (var field in formData.fields) {
+        print('Field: ${field.key} = ${field.value}');
+      }
+      for (var file in formData.files) {
+        print('File: ${file.key} = ${file.value.filename}');
+      }
 
       final response = await ApiService.to.post('properties', data: formData);
 

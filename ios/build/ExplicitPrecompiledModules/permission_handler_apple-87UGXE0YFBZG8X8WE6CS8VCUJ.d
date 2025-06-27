@@ -1,0 +1,28 @@
+moduledependenciestarget: \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Modules/module.modulemap \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/permission_handler_apple-umbrella.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.2.sdk/System/Library/Frameworks/UIKit.framework/Modules/module.modulemap \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.2.sdk/System/Library/Frameworks/Foundation.framework/Modules/module.modulemap \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/PermissionHandlerEnums.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/PermissionHandlerPlugin.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/Flutter.framework/Modules/module.modulemap \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/PermissionManager.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/AudioVideoPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/PermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/UnknownPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/AppTrackingTransparencyPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/BackgroundRefreshStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/BluetoothPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/ContactPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/EventPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/LocationPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/MediaLibraryPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/PhonePermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/PhotoPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/SensorPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/SpeechPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/StoragePermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/NotificationPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/CriticalAlertsPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/AssistantPermissionStrategy.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/permission_handler_apple/permission_handler_apple.framework/Headers/Codec.h

@@ -32,15 +32,20 @@ class PropertyDetailView extends GetView<PropertyDetailController> {
                 width: double.infinity,
                 height: 250,
                 color: Colors.grey[200],
-                child: property.image.isNotEmpty
+                child: (property.fullImageUrl != null &&
+                        property.fullImageUrl!.isNotEmpty)
                     ? Image.network(
-                        property.image,
+                        property.fullImageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Center(
-                          child: Icon(Icons.home_outlined,
-                              size: 60, color: Colors.grey),
-                        ),
+                        errorBuilder: (context, error, stackTrace) {
+                          print('❌ Error loading property image: $error');
+                          print(
+                              '❌ Property image URL: ${property.fullImageUrl}');
+                          return const Center(
+                            child: Icon(Icons.home_outlined,
+                                size: 60, color: Colors.grey),
+                          );
+                        },
                       )
                     : const Center(
                         child: Icon(Icons.home_outlined,
@@ -171,8 +176,9 @@ class PropertyDetailView extends GetView<PropertyDetailController> {
                             CircleAvatar(
                               backgroundColor: Theme.of(context).primaryColor,
                               child: Text(
-                                property.user.name.isNotEmpty
-                                    ? property.user.name[0].toUpperCase()
+                                (property.user?.name != null &&
+                                        property.user!.name.isNotEmpty)
+                                    ? property.user!.name[0].toUpperCase()
                                     : 'U',
                                 style: const TextStyle(
                                   color: Colors.white,
@@ -186,12 +192,12 @@ class PropertyDetailView extends GetView<PropertyDetailController> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    property.user.name,
+                                    property.user?.name ?? 'غير محدد',
                                     style:
                                         Theme.of(context).textTheme.titleMedium,
                                   ),
                                   Text(
-                                    property.user.phone,
+                                    property.user?.phone ?? 'غير متوفر',
                                     style: const TextStyle(color: Colors.grey),
                                   ),
                                 ],

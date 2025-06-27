@@ -89,6 +89,20 @@ class AuthController extends GetxController {
     try {
       _isLoading.value = true;
 
+      // اختبار الاتصال أولاً
+      print('=== Testing Connection ===');
+      final isConnected = await ApiService.to.testConnection();
+      if (!isConnected) {
+        Get.snackbar(
+          'خطأ في الاتصال',
+          'لا يمكن الاتصال بالسيرفر، تأكد من أن السيرفر يعمل',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          icon: const Icon(Icons.error, color: Colors.white),
+        );
+        return;
+      }
+
       final values = loginFormKey.currentState!.value;
 
       // تحويل الأرقام العربية للإنجليزية
@@ -106,7 +120,7 @@ class AuthController extends GetxController {
       print('Phone: $phone (original: ${values['phone']})');
       print('Password Length: ${password.length}');
 
-      final response = await ApiService.to.post('login', data: requestData);
+      final response = await ApiService.to.login(requestData);
 
       print('=== Login Response ===');
       print('Status Code: ${response.statusCode}');
@@ -122,9 +136,28 @@ class AuthController extends GetxController {
         }
 
         if (responseData['user'] != null) {
-          await StorageService.to
-              .writeSecure('user_data', responseData['user'].toString());
-          _user.value = UserModel.fromJson(responseData['user']);
+          try {
+            await StorageService.to
+                .writeSecure('user_data', responseData['user'].toString());
+            _user.value = UserModel.fromJson(responseData['user']);
+          } catch (parseError) {
+            print('=== User Data Parse Error ===');
+            print('Error parsing user data: $parseError');
+            print('User data: ${responseData['user']}');
+
+            // إذا فشل في تحليل بيانات المستخدم، نستمر مع الـ token فقط
+            Get.snackbar(
+              'تحذير',
+              'تم تسجيل الدخول بنجاح، لكن هناك مشكلة في تحميل البيانات الشخصية',
+              backgroundColor: Colors.orange,
+              colorText: Colors.white,
+              icon: const Icon(Icons.warning, color: Colors.white),
+              snackPosition: SnackPosition.TOP,
+              duration: const Duration(seconds: 3),
+              margin: const EdgeInsets.all(16),
+              borderRadius: 8,
+            );
+          }
         }
 
         Get.snackbar(
@@ -191,6 +224,20 @@ class AuthController extends GetxController {
     try {
       _isLoading.value = true;
 
+      // اختبار الاتصال أولاً
+      print('=== Testing Connection ===');
+      final isConnected = await ApiService.to.testConnection();
+      if (!isConnected) {
+        Get.snackbar(
+          'خطأ في الاتصال',
+          'لا يمكن الاتصال بالسيرفر، تأكد من أن السيرفر يعمل',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          icon: const Icon(Icons.error, color: Colors.white),
+        );
+        return;
+      }
+
       final values = registerFormKey.currentState!.value;
 
       // التحقق من الحقول المطلوبة يدوياً
@@ -245,7 +292,7 @@ class AuthController extends GetxController {
       print('Password Length: ${password.length}');
       print('Password Confirmation Length: ${passwordConfirmation.length}');
 
-      final response = await ApiService.to.post('register', data: requestData);
+      final response = await ApiService.to.register(requestData);
 
       print('=== Register Response ===');
       print('Status Code: ${response.statusCode}');
@@ -261,9 +308,28 @@ class AuthController extends GetxController {
         }
 
         if (responseData['user'] != null) {
-          await StorageService.to
-              .writeSecure('user_data', responseData['user'].toString());
-          _user.value = UserModel.fromJson(responseData['user']);
+          try {
+            await StorageService.to
+                .writeSecure('user_data', responseData['user'].toString());
+            _user.value = UserModel.fromJson(responseData['user']);
+          } catch (parseError) {
+            print('=== User Data Parse Error ===');
+            print('Error parsing user data: $parseError');
+            print('User data: ${responseData['user']}');
+
+            // إذا فشل في تحليل بيانات المستخدم، نستمر مع الـ token فقط
+            Get.snackbar(
+              'تحذير',
+              'تم إنشاء الحساب بنجاح، لكن هناك مشكلة في تحميل البيانات الشخصية',
+              backgroundColor: Colors.orange,
+              colorText: Colors.white,
+              icon: const Icon(Icons.warning, color: Colors.white),
+              snackPosition: SnackPosition.TOP,
+              duration: const Duration(seconds: 3),
+              margin: const EdgeInsets.all(16),
+              borderRadius: 8,
+            );
+          }
         }
 
         Get.snackbar(

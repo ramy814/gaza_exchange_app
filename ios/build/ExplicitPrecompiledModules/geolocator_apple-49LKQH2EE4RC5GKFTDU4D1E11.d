@@ -1,0 +1,22 @@
+moduledependenciestarget: \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Modules/module.modulemap \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/geolocator-umbrella.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.2.sdk/System/Library/Frameworks/Foundation.framework/Modules/module.modulemap \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/GeolocatorPlugin.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/Flutter.framework/Modules/module.modulemap \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/ErrorCodes.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/GeolocationHandler.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.2.sdk/System/Library/Frameworks/CoreLocation.framework/Modules/module.modulemap \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/LocationAccuracyHandler.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/LocationServiceStreamHandler.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/PermissionHandler.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/PositionStreamHandler.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/ActivityTypeMapper.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/AuthorizationStatusMapper.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/LocationAccuracyMapper.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/LocationDistanceMapper.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/LocationMapper.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/PermissionUtils.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/ServiceStatus.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/GeolocationHandler_Test.h \
+  /Users/ramigh/gaza_exchange_app/build/ios/Debug-iphonesimulator/geolocator_apple/geolocator_apple.framework/Headers/GeolocatorPlugin_Test.h
