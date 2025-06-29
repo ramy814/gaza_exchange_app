@@ -1,26 +1,17 @@
 import 'package:dio/dio.dart' as dio;
 import 'package:get/get.dart' hide Response;
 import 'storage_service.dart';
+import '../utils/api_config.dart';
+import 'dart:developer' as developer;
+import 'dart:typed_data';
 
 class ApiService extends GetxService {
   static ApiService get to => Get.find();
 
   late dio.Dio _dio;
 
-  // خيارات متعددة للـ baseUrl حسب البيئة
-  // اختر المناسب حسب جهازك:
-
-  // للـ iOS Simulator أو Web
-  final String baseUrl = 'http://localhost:8000/api/';
-
-  // للـ Android Emulator
-  // final String baseUrl = 'http://10.0.2.2:8000/api/';
-
-  // للـ Android Device (استخدم IP جهازك)
-  // final String baseUrl = 'http://192.168.1.100:8000/api/';
-
-  // للـ iOS Device (استخدم IP جهازك)
-  // final String baseUrl = 'http://192.168.1.100:8000/api/';
+  // Use the baseUrl from ApiConfig
+  final String baseUrl = ApiConfig.baseUrl;
 
   @override
   void onInit() {
@@ -32,12 +23,9 @@ class ApiService extends GetxService {
     _dio = dio.Dio(
       dio.BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        connectTimeout: ApiConfig.connectTimeout,
+        receiveTimeout: ApiConfig.receiveTimeout,
+        headers: ApiConfig.defaultHeaders,
       ),
     );
 
@@ -47,13 +35,20 @@ class ApiService extends GetxService {
         onRequest: (options, handler) async {
           // Add auth token if available
           final token = await StorageService.to.readSecure('auth_token');
+          print('🌐 API Request to: ${options.path}');
+          print('🌐 Token available: ${token != null}');
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
+            print('🌐 Added Authorization header with token');
+          } else {
+            print('🌐 No token available for request');
           }
           handler.next(options);
         },
         onError: (error, handler) {
           // Handle errors globally
+          print(
+              '🌐 API Error for ${error.requestOptions.path}: ${error.response?.statusCode}');
           _handleError(error);
           handler.next(error);
         },
@@ -173,17 +168,83 @@ class ApiService extends GetxService {
     return await _dio.post(path, data: formData);
   }
 
+  // Upload multiple images for items
+  Future<dio.Response> uploadItemWithImages(
+    String path, {
+    required List<String> imagePaths,
+    required Map<String, dynamic> data,
+  }) async {
+    final formData = dio.FormData.fromMap(data);
+
+    // إضافة الصور المتعددة
+    for (int i = 0; i < imagePaths.length; i++) {
+      if (imagePaths[i].isNotEmpty) {
+        final file = await dio.MultipartFile.fromFile(
+          imagePaths[i],
+          filename: 'item_image_$i.jpg',
+        );
+        formData.files.add(MapEntry('images[]', file));
+      }
+    }
+
+    print('🌐 Uploading item with ${imagePaths.length} images');
+    print('🌐 FormData fields: ${formData.fields}');
+    print('🌐 FormData files count: ${formData.files.length}');
+
+    return await _dio.post(path, data: formData);
+  }
+
+  // Upload multiple images for properties
+  Future<dio.Response> uploadPropertyWithImages(
+    String path, {
+    required List<String> imagePaths,
+    required Map<String, dynamic> data,
+  }) async {
+    final formData = dio.FormData.fromMap(data);
+
+    // إضافة الصور المتعددة
+    for (int i = 0; i < imagePaths.length; i++) {
+      if (imagePaths[i].isNotEmpty) {
+        final file = await dio.MultipartFile.fromFile(
+          imagePaths[i],
+          filename: 'property_image_$i.jpg',
+        );
+        formData.files.add(MapEntry('images[]', file));
+      }
+    }
+
+    print('🌐 Uploading property with ${imagePaths.length} images');
+    print('🌐 FormData fields: ${formData.fields}');
+    print('🌐 FormData files count: ${formData.files.length}');
+
+    return await _dio.post(path, data: formData);
+  }
+
   // دالة لاختبار الاتصال بالسيرفر
   Future<bool> testConnection() async {
-    try {
-      print('🌐 Testing connection to: ${baseUrl}categories');
-      final response = await _dio.get('categories');
-      print('🌐 Connection test successful: ${response.statusCode}');
-      return response.statusCode == 200;
-    } catch (e) {
-      print('🌐 Connection test failed: $e');
-      return false;
+    print('🌐 Testing connection to: $baseUrl');
+    // Try multiple endpoints to test connection
+    final endpoints = ['categories', 'health', ''];
+    for (String endpoint in endpoints) {
+      try {
+        print('🌐 Testing endpoint: $endpoint');
+        final response = await _dio.get(endpoint);
+        print('🌐 Connection test successful: ${response.statusCode}');
+        return response.statusCode == 200;
+      } catch (e) {
+        print('🌐 Connection test failed for $endpoint: $e');
+        if (e is dio.DioException) {
+          print('🌐 Error type: ${e.type}');
+          print('🌐 Error message: ${e.message}');
+          if (e.response != null) {
+            print('🌐 Response status: ${e.response!.statusCode}');
+            print('🌐 Response data: ${e.response!.data}');
+          }
+        }
+      }
     }
+    print('🌐 All connection tests failed');
+    return false;
   }
 
   // Authentication APIs
@@ -205,8 +266,8 @@ class ApiService extends GetxService {
   }
 
   Future<dio.Response> getProfile() async {
-    print('🌐 Profile URL: ${baseUrl}profile');
-    return await _dio.get('profile');
+    print('🌐 Profile URL: ${baseUrl}user/profile');
+    return await _dio.get('user/profile');
   }
 
   // User APIs
@@ -319,5 +380,37 @@ class ApiService extends GetxService {
 
   Future<dio.Response> deleteProperty(int id) async {
     return await _dio.delete('properties/$id');
+  }
+
+  // Get image through API endpoint (for private storage)
+  Future<Uint8List?> getImageBytes(String imagePath) async {
+    try {
+      final response = await _dio.get(
+        'image',
+        queryParameters: {'path': imagePath},
+        options: dio.Options(
+          responseType: dio.ResponseType.bytes,
+          headers: {
+            'Accept': 'image/*',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return Uint8List.fromList(response.data);
+      }
+      return null;
+    } catch (e) {
+      developer.log('❌ Error fetching image: $e', name: 'ApiService');
+      return null;
+    }
+  }
+
+  // Get image URL for API endpoint
+  String getImageApiUrl(String imagePath) {
+    // Remove leading slash if present
+    String cleanPath =
+        imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+    return '${ApiConfig.baseUrl}image?path=$cleanPath';
   }
 }

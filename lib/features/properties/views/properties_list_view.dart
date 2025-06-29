@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:gaza_exchange_app/core/utils/app_theme.dart';
 import 'package:gaza_exchange_app/features/properties/controllers/properties_controller.dart';
 import 'package:gaza_exchange_app/features/properties/models/property_model.dart';
 import 'package:gaza_exchange_app/widgets/bottom_nav_bar.dart';
+import 'package:gaza_exchange_app/widgets/custom_card.dart';
 import 'package:gaza_exchange_app/core/utils/app_routes.dart';
 
 class PropertiesListView extends StatelessWidget {
@@ -171,225 +173,28 @@ class PropertiesListView extends StatelessWidget {
 
   Widget _buildPropertyCard(
       PropertyModel property, PropertiesController controller) {
-    return GestureDetector(
+    return CustomCard(
+      imageUrl: property.firstImageUrl,
+      title: property.title,
+      subtitle:
+          '${property.address}\n🛏️ ${property.bedrooms} غرف • 🚿 ${property.bathrooms} حمام • 📐 ${property.area.toInt()}م²\n👤 ${property.user?.name ?? 'غير محدد'}',
+      price: '${property.price.toStringAsFixed(0)} ₪',
       onTap: () => controller.goToPropertyDetail(property.id),
-      child: Container(
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: property.type == 'buy'
+              ? AppTheme.primaryColor
+              : AppTheme.accentColor,
+          borderRadius: BorderRadius.circular(6),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Property Image
-            Expanded(
-              flex: 3,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.accentColor.withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    // Image or placeholder
-                    Center(
-                      child: (property.fullImageUrl != null &&
-                              property.fullImageUrl!.isNotEmpty)
-                          ? ClipRRect(
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(16),
-                                topRight: Radius.circular(16),
-                              ),
-                              child: Image.network(
-                                property.fullImageUrl!,
-                                width: double.infinity,
-                                height: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  print(
-                                      '❌ Error loading property image: $error');
-                                  print(
-                                      '❌ Property image URL: ${property.fullImageUrl}');
-                                  return Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.home_work_outlined,
-                                        size: 40,
-                                        color: AppTheme.accentColor,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        '${property.price} ₪',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.accentColor,
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.home_work_outlined,
-                                  size: 40,
-                                  color: AppTheme.accentColor,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${property.price} ₪',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.accentColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                    // Type badge
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: property.type == 'buy'
-                              ? AppTheme.primaryColor
-                              : AppTheme.accentColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          property.type == 'buy' ? 'للبيع' : 'للإيجار',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Property Details
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      property.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      property.address,
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 11,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    // معلومات العقار
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.bed,
-                          size: 10,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${property.bedrooms}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 9,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.bathroom,
-                          size: 10,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${property.bathrooms}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 9,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.square_foot,
-                          size: 10,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${property.area}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 9,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.person_outline,
-                          size: 12,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            property.user?.name ?? 'غير محدد',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        child: Text(
+          property.type == 'buy' ? 'للبيع' : 'للإيجار',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 8,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

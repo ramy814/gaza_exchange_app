@@ -1,10 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart' as dio;
-import 'dart:io';
+import 'dart:developer' as developer;
 import '../../../core/services/api_service.dart';
+import '../../../core/models/category_model.dart';
+import '../../../core/utils/validators.dart';
+import '../../categories/controllers/category_controller.dart';
 
 class AddPropertyController extends GetxController {
   final formKey = GlobalKey<FormBuilderState>();
@@ -13,42 +17,23 @@ class AddPropertyController extends GetxController {
 
   List<File> get selectedImages => _selectedImages;
   bool get isLoading => _isLoading.value;
+  List<CategoryModel> get propertyCategories =>
+      CategoryController.to.mainCategories;
+  bool get isCategoriesLoading => CategoryController.to.isMainCategoriesLoading;
 
   final List<String> propertyTypes = ['شقة', 'منزل', 'تجاري', 'أرض'];
 
   final List<String> purposes = ['بيع', 'إيجار', 'تبادل'];
 
-  // دالة محسنة لتحويل الأرقام العربية للإنجليزية
-  String convertArabicToEnglishNumbers(String input) {
-    if (input.isEmpty) return input;
+  @override
+  void onInit() {
+    super.onInit();
+    // التصنيفات يتم تحميلها تلقائياً في CategoryController
+  }
 
-    const Map<String, String> arabicToEnglish = {
-      '٠': '0',
-      '١': '1',
-      '٢': '2',
-      '٣': '3',
-      '٤': '4',
-      '٥': '5',
-      '٦': '6',
-      '٧': '7',
-      '٨': '8',
-      '٩': '9',
-    };
-
-    String result = input;
-    arabicToEnglish.forEach((arabic, english) {
-      result = result.replaceAll(arabic, english);
-    });
-
-    // إزالة أي أحرف غير رقمية باستثناء النقطة العشرية
-    result = result.replaceAll(RegExp(r'[^\d.]'), '');
-
-    // التأكد من وجود رقم واحد على الأقل
-    if (result.isEmpty || result == '.') {
-      result = '0';
-    }
-
-    return result;
+  // الحصول على معرف التصنيف من الاسم
+  int? getCategoryId(String categoryName) {
+    return CategoryController.to.getCategoryId(categoryName);
   }
 
   // دالة للتحقق من صحة الأرقام العربية والإنجليزية
@@ -64,7 +49,7 @@ class AddPropertyController extends GetxController {
     }
 
     // تحويل للإنجليزية للتحقق من القيمة
-    final convertedValue = convertArabicToEnglishNumbers(value);
+    final convertedValue = Validators.convertArabicToEnglishNumbers(value);
     final numValue = double.tryParse(convertedValue);
 
     if (numValue == null || numValue < minValue) {
@@ -145,10 +130,18 @@ class AddPropertyController extends GetxController {
     try {
       _isLoading.value = true;
 
-      // تحويل الأرقام العربية للإنجليزية
-      final priceStr =
-          convertArabicToEnglishNumbers(values['price']?.toString() ?? '0');
+      // تحويل الأرقام العربية للإنجليزية باستخدام الدالة العامة
+      final originalPrice = values['price']?.toString() ?? '0';
+      final priceStr = Validators.convertArabicToEnglishNumbers(originalPrice);
       final price = double.tryParse(priceStr) ?? 0.0;
+
+      developer.log('=== Property Price Conversion ===',
+          name: 'AddPropertyController');
+      developer.log('Original price: $originalPrice',
+          name: 'AddPropertyController');
+      developer.log('Converted price: $priceStr',
+          name: 'AddPropertyController');
+      developer.log('Final price: $price', name: 'AddPropertyController');
 
       // استخدام نوع العقار المحدد من المستخدم
       final selectedType = values['type']?.toString() ?? 'شقة';
@@ -172,61 +165,71 @@ class AddPropertyController extends GetxController {
           propertyType = 'apartment';
       }
 
-      // تحويل الغرض إلى نوع العملية
-      String purposeType = 'buy'; // القيمة الافتراضية
-      if (values['purpose'] == 'بيع') {
-        purposeType = 'buy';
-      } else if (values['purpose'] == 'إيجار') {
-        purposeType = 'rent';
-      } else if (values['purpose'] == 'تبادل') {
-        purposeType = 'exchange';
-      }
+      // تحويل الغرض إلى نوع العملية باستخدام الدالة العامة
+      final arabicPurpose = values['purpose']?.toString() ?? 'بيع';
+      final englishPurpose =
+          Validators.convertPropertyTypeToEnglish(arabicPurpose);
+
+      developer.log('=== Property Purpose Conversion ===',
+          name: 'AddPropertyController');
+      developer.log('Arabic purpose: $arabicPurpose',
+          name: 'AddPropertyController');
+      developer.log('English purpose: $englishPurpose',
+          name: 'AddPropertyController');
 
       // طباعة القيم للتأكد
-      print('=== Property Data ===');
-      print('Title: ${values['title']}');
-      print('Description: ${values['description']}');
-      print('Address: ${values['location']}');
-      print('Property Type: $propertyType (original: $selectedType)');
-      print('Purpose Type: $purposeType (original: ${values['purpose']})');
-      print('Price: $price (original: ${values['price']})');
-      print('Images count: ${_selectedImages.length}');
+      developer.log('=== Property Data ===', name: 'AddPropertyController');
+      developer.log('Title: ${values['title']}', name: 'AddPropertyController');
+      developer.log('Description: ${values['description']}',
+          name: 'AddPropertyController');
+      developer.log('Address: ${values['location']}',
+          name: 'AddPropertyController');
+      developer.log('Property Type: $propertyType (original: $selectedType)',
+          name: 'AddPropertyController');
+      developer.log('Purpose Type: $englishPurpose (original: $arabicPurpose)',
+          name: 'AddPropertyController');
+      developer.log('Price: $price (original: $originalPrice)',
+          name: 'AddPropertyController');
+      developer.log('Images count: ${_selectedImages.length}',
+          name: 'AddPropertyController');
 
-      // Create FormData for file upload حسب متطلبات الـ API
-      final formData = dio.FormData.fromMap({
+      // Create data for property
+      final propertyData = {
         'title': values['title'].toString().trim(),
         'description': values['description'].toString().trim(),
+        'location': values['location'].toString().trim(),
         'address': values['location'].toString().trim(),
-        'type': purposeType, // إرسال نوع العملية (بيع، إيجار، تبادل)
+        'type': englishPurpose,
         'price': price,
-      });
+        'phone': values['phone'] ?? '',
+        'status': 'available',
+        'latitude': 31.5017,
+        'longitude': 34.4668,
+        'bedrooms': 0,
+        'bathrooms': 0,
+        'area': 0,
+      };
 
-      // Add only the first image (API supports single image)
-      if (_selectedImages.isNotEmpty) {
-        formData.files.add(
-          MapEntry(
-            'image', // استخدام image بدلاً من images[]
-            await dio.MultipartFile.fromFile(_selectedImages[0].path),
-          ),
-        );
-      }
+      // تحويل مسارات الصور إلى قائمة
+      final imagePaths = _selectedImages.map((file) => file.path).toList();
 
-      print('=== Sending FormData ===');
-      print('FormData fields: ${formData.fields}');
-      print('FormData files: ${formData.files.length}');
-      print('=== Detailed FormData ===');
-      for (var field in formData.fields) {
-        print('Field: ${field.key} = ${field.value}');
-      }
-      for (var file in formData.files) {
-        print('File: ${file.key} = ${file.value.filename}');
-      }
+      developer.log('=== Property Data ===', name: 'AddPropertyController');
+      developer.log('Property data: $propertyData',
+          name: 'AddPropertyController');
+      developer.log('Image paths: $imagePaths', name: 'AddPropertyController');
 
-      final response = await ApiService.to.post('properties', data: formData);
+      // إرسال البيانات باستخدام الدالة الجديدة
+      final response = await ApiService.to.uploadPropertyWithImages(
+        'properties',
+        imagePaths: imagePaths,
+        data: propertyData,
+      );
 
-      print('=== API Response ===');
-      print('Status Code: ${response.statusCode}');
-      print('Response Data: ${response.data}');
+      developer.log('=== API Response ===', name: 'AddPropertyController');
+      developer.log('Status Code: ${response.statusCode}',
+          name: 'AddPropertyController');
+      developer.log('Response Data: ${response.data}',
+          name: 'AddPropertyController');
 
       if (response.statusCode == 201) {
         Get.back();
@@ -247,12 +250,15 @@ class AddPropertyController extends GetxController {
         );
       }
     } catch (e) {
-      print('=== Error Details ===');
-      print('Error: $e');
+      developer.log('=== Error Details ===', name: 'AddPropertyController');
+      developer.log('Error: $e', name: 'AddPropertyController');
       if (e is dio.DioException) {
-        print('DioError Type: ${e.type}');
-        print('DioError Response: ${e.response?.data}');
-        print('DioError Status Code: ${e.response?.statusCode}');
+        developer.log('DioError Type: ${e.type}',
+            name: 'AddPropertyController');
+        developer.log('DioError Response: ${e.response?.data}',
+            name: 'AddPropertyController');
+        developer.log('DioError Status Code: ${e.response?.statusCode}',
+            name: 'AddPropertyController');
       }
 
       Get.snackbar(

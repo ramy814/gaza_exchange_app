@@ -1,7 +1,9 @@
 import 'package:get/get.dart';
+import 'dart:developer' as developer;
+import 'package:gaza_exchange_app/core/services/api_service.dart';
 import 'package:gaza_exchange_app/features/items/models/item_model.dart';
+import 'package:gaza_exchange_app/core/models/api_response_model.dart';
 import 'package:gaza_exchange_app/core/models/nearby_item_model.dart';
-import 'api_service.dart';
 
 class ItemsService extends GetxService {
   static ItemsService get to => Get.find();
@@ -32,87 +34,70 @@ class ItemsService extends GetxService {
       if (longitude != null) queryParams['longitude'] = longitude;
       if (radius != null) queryParams['radius'] = radius;
 
-      print('🔍 Fetching items with params: $queryParams');
+      developer.log('🔍 Fetching items with params: $queryParams',
+          name: 'ItemsService');
       final response =
           await _apiService.getAllItems(queryParameters: queryParams);
 
-      print('📡 Response status: ${response.statusCode}');
-      print('📡 Response data type: ${response.data.runtimeType}');
-      print('📡 Response data: ${response.data}');
+      developer.log('📡 Response status: ${response.statusCode}',
+          name: 'ItemsService');
+      developer.log('📡 Response data type: ${response.data.runtimeType}',
+          name: 'ItemsService');
+      developer.log('📡 Response data: ${response.data}', name: 'ItemsService');
 
       if (response.statusCode == 200) {
-        // التحقق من نوع البيانات الراجعة
-        if (response.data is List) {
-          final itemsData = response.data as List;
-          print('📦 Found ${itemsData.length} items in response');
-
-          if (itemsData.isEmpty) {
-            print('⚠️ No items found in response');
-            return [];
-          }
-
-          // طباعة أول عنصر للتحقق من البنية
-          if (itemsData.isNotEmpty) {
-            print('📋 First item structure: ${itemsData.first}');
-          }
-
-          final items = <ItemModel>[];
-          for (int i = 0; i < itemsData.length; i++) {
-            try {
-              final item = ItemModel.fromJson(itemsData[i]);
-              items.add(item);
-              print('✅ Successfully parsed item ${i + 1}: ${item.title}');
-            } catch (e) {
-              print('❌ Error parsing item ${i + 1}: $e');
-              print('❌ Item data: ${itemsData[i]}');
-            }
-          }
-
-          print(
-              '🎯 Successfully parsed ${items.length} out of ${itemsData.length} items');
-          return items;
-        } else if (response.data is Map) {
-          // إذا كانت البيانات في كائن بدلاً من مصفوفة
-          final data = response.data as Map;
-          print('📦 Response is Map, checking for items key...');
-          print('📦 Available keys: ${data.keys.toList()}');
-
-          if (data.containsKey('items') && data['items'] is List) {
-            final itemsData = data['items'] as List;
-            print('📦 Found items in data.items: ${itemsData.length} items');
-
-            final items =
-                itemsData.map((item) => ItemModel.fromJson(item)).toList();
-            print(
-                '🎯 Successfully parsed ${items.length} items from data.items');
-            return items;
-          } else if (data.containsKey('data') && data['data'] is List) {
-            final itemsData = data['data'] as List;
-            print('📦 Found items in data.data: ${itemsData.length} items');
-
-            final items =
-                itemsData.map((item) => ItemModel.fromJson(item)).toList();
-            print(
-                '🎯 Successfully parsed ${items.length} items from data.data');
-            return items;
-          } else {
-            print('⚠️ No items found in response data');
-            return [];
-          }
-        } else {
-          print(
-              '⚠️ Unexpected response data type: ${response.data.runtimeType}');
-          return [];
+        final responseData = response.data;
+        List<dynamic> itemsData = [];
+        if (responseData['data'] != null &&
+            responseData['data']['items'] != null) {
+          itemsData = responseData['data']['items'] as List;
+        } else if (responseData['items'] != null) {
+          itemsData = responseData['items'] as List;
+        } else if (responseData is List) {
+          itemsData = responseData;
         }
+        return _parseItemsList(itemsData);
       } else {
-        print('❌ API returned status code: ${response.statusCode}');
+        developer.log('❌ API returned status code: ${response.statusCode}',
+            name: 'ItemsService');
         return [];
       }
     } catch (e) {
-      print('💥 Error getting all items: $e');
-      print('💥 Error stack trace: ${StackTrace.current}');
+      developer.log('💥 Error getting all items: $e', name: 'ItemsService');
+      developer.log('💥 Error stack trace: ${StackTrace.current}',
+          name: 'ItemsService');
       return [];
     }
+  }
+
+  // دالة مساعدة لتحليل قائمة السلع
+  List<ItemModel> _parseItemsList(List itemsData) {
+    developer.log('📦 Found ${itemsData.length} items in response',
+        name: 'ItemsService');
+
+    if (itemsData.isEmpty) {
+      developer.log('⚠️ No items found in response', name: 'ItemsService');
+      return [];
+    }
+
+    final items = <ItemModel>[];
+    for (int i = 0; i < itemsData.length; i++) {
+      try {
+        final item = ItemModel.fromJson(itemsData[i]);
+        items.add(item);
+        developer.log('✅ Successfully parsed item ${i + 1}: ${item.title}',
+            name: 'ItemsService');
+      } catch (e) {
+        developer.log('❌ Error parsing item ${i + 1}: $e',
+            name: 'ItemsService');
+        developer.log('❌ Item data: ${itemsData[i]}', name: 'ItemsService');
+      }
+    }
+
+    developer.log(
+        '🎯 Successfully parsed ${items.length} out of ${itemsData.length} items',
+        name: 'ItemsService');
+    return items;
   }
 
   // عرض السلع القريبة
@@ -127,15 +112,43 @@ class ItemsService extends GetxService {
         longitude: longitude,
         radius: radius,
       );
+
       if (response.statusCode == 200) {
-        final nearbyItemsData = response.data['nearby_items'] as List;
-        return nearbyItemsData
-            .map((item) => NearbyItemModel.fromJson(item))
-            .toList();
+        final responseData = response.data;
+
+        // التحقق من الشكل الجديد للبيانات
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('success')) {
+          final apiResponse = ApiResponseModel.fromJson(responseData, null);
+
+          if (apiResponse.success && apiResponse.data != null) {
+            final data = apiResponse.data;
+            if (data is Map<String, dynamic> &&
+                data.containsKey('nearby_items')) {
+              final nearbyItemsData = data['nearby_items'] as List;
+              return nearbyItemsData
+                  .map((item) => NearbyItemModel.fromJson(item))
+                  .toList();
+            } else if (data is List) {
+              return data
+                  .map((item) => NearbyItemModel.fromJson(item))
+                  .toList();
+            }
+          }
+        } else {
+          // الشكل القديم للبيانات
+          if (responseData is Map<String, dynamic> &&
+              responseData.containsKey('nearby_items')) {
+            final nearbyItemsData = responseData['nearby_items'] as List;
+            return nearbyItemsData
+                .map((item) => NearbyItemModel.fromJson(item))
+                .toList();
+          }
+        }
       }
       return [];
     } catch (e) {
-      print('Error getting nearby items: $e');
+      developer.log('Error getting nearby items: $e', name: 'ItemsService');
       return [];
     }
   }
@@ -143,106 +156,38 @@ class ItemsService extends GetxService {
   // عرض السلع الرائجة
   Future<List<ItemModel>> getTrendingItems() async {
     try {
-      print('🔥 Fetching trending items...');
+      developer.log('🔥 Fetching trending items...', name: 'ItemsService');
       final response = await _apiService.getTrendingItems();
 
-      print('📡 Trending items response status: ${response.statusCode}');
-      print(
-          '📡 Trending items response data type: ${response.data.runtimeType}');
-      print('📡 Trending items response data: ${response.data}');
+      developer.log('📡 Trending items response status: ${response.statusCode}',
+          name: 'ItemsService');
+      developer.log(
+          '📡 Trending items response data type: ${response.data.runtimeType}',
+          name: 'ItemsService');
+      developer.log('📡 Trending items response data: ${response.data}',
+          name: 'ItemsService');
 
       if (response.statusCode == 200) {
-        // التحقق من نوع البيانات الراجعة
-        if (response.data is List) {
-          final trendingItemsData = response.data as List;
-          print(
-              '📦 Found ${trendingItemsData.length} trending items in response');
-
-          if (trendingItemsData.isEmpty) {
-            print('⚠️ No trending items found in response');
-            return [];
-          }
-
-          // طباعة أول عنصر للتحقق من البنية
-          if (trendingItemsData.isNotEmpty) {
-            print(
-                '📋 First trending item structure: ${trendingItemsData.first}');
-          }
-
-          final items = <ItemModel>[];
-          for (int i = 0; i < trendingItemsData.length; i++) {
-            try {
-              final item = ItemModel.fromJson(trendingItemsData[i]);
-              items.add(item);
-              print(
-                  '✅ Successfully parsed trending item ${i + 1}: ${item.title}');
-            } catch (e) {
-              print('❌ Error parsing trending item ${i + 1}: $e');
-              print('❌ Trending item data: ${trendingItemsData[i]}');
-            }
-          }
-
-          print(
-              '🎯 Successfully parsed ${items.length} out of ${trendingItemsData.length} trending items');
-          return items;
-        } else if (response.data is Map) {
-          // إذا كانت البيانات في كائن بدلاً من مصفوفة
-          final data = response.data as Map;
-          print('📦 Trending response is Map, checking for items key...');
-          print('📦 Available keys: ${data.keys.toList()}');
-
-          if (data.containsKey('trending_items') &&
-              data['trending_items'] is List) {
-            final trendingItemsData = data['trending_items'] as List;
-            print(
-                '📦 Found trending items in data.trending_items: ${trendingItemsData.length} items');
-
-            final items = trendingItemsData
-                .map((item) => ItemModel.fromJson(item))
-                .toList();
-            print(
-                '🎯 Successfully parsed ${items.length} trending items from data.trending_items');
-            return items;
-          } else if (data.containsKey('items') && data['items'] is List) {
-            final trendingItemsData = data['items'] as List;
-            print(
-                '📦 Found trending items in data.items: ${trendingItemsData.length} items');
-
-            final items = trendingItemsData
-                .map((item) => ItemModel.fromJson(item))
-                .toList();
-            print(
-                '🎯 Successfully parsed ${items.length} trending items from data.items');
-            return items;
-          } else if (data.containsKey('data') && data['data'] is List) {
-            final trendingItemsData = data['data'] as List;
-            print(
-                '📦 Found trending items in data.data: ${trendingItemsData.length} items');
-
-            final items = trendingItemsData
-                .map((item) => ItemModel.fromJson(item))
-                .toList();
-            print(
-                '🎯 Successfully parsed ${items.length} trending items from data.data');
-            return items;
-          } else {
-            print('⚠️ No trending items found in response data');
-            return [];
-          }
-        } else {
-          print(
-              '⚠️ Unexpected trending items response data type: ${response.data.runtimeType}');
-          return [];
+        final responseData = response.data;
+        List<dynamic> trendingData = [];
+        if (responseData['data'] != null &&
+            responseData['data']['trending_items'] != null) {
+          trendingData = responseData['data']['trending_items'] as List;
+        } else if (responseData['trending_items'] != null) {
+          trendingData = responseData['trending_items'] as List;
+        } else if (responseData is List) {
+          trendingData = responseData;
         }
+        return _parseItemsList(trendingData);
       } else {
-        print(
-            '❌ Trending items API returned status code: ${response.statusCode}');
-        return [];
+        developer.log('❌ API returned status code: ${response.statusCode}',
+            name: 'ItemsService');
+        throw Exception('API returned status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('💥 Error getting trending items: $e');
-      print('💥 Error stack trace: ${StackTrace.current}');
-      return [];
+      developer.log('💥 Error getting trending items: $e',
+          name: 'ItemsService');
+      rethrow;
     }
   }
 
@@ -255,29 +200,47 @@ class ItemsService extends GetxService {
       }
       return null;
     } catch (e) {
-      print('Error getting item: $e');
+      developer.log('Error getting item: $e', name: 'ItemsService');
       return null;
     }
   }
 
   // إضافة سلعة جديدة
   Future<ItemModel?> createItem(
-      Map<String, dynamic> data, String? imagePath) async {
+      Map<String, dynamic> data, List<String> imagePaths) async {
     try {
-      final formData = await _apiService.uploadFile(
+      developer.log('📸 Creating item with ${imagePaths.length} images',
+          name: 'ItemsService');
+
+      final response = await _apiService.uploadItemWithImages(
         'items',
-        filePath: imagePath ?? '',
-        fieldName: 'image',
-        additionalData: data,
+        imagePaths: imagePaths,
+        data: data,
       );
 
-      if (formData.statusCode == 201) {
-        final itemData = formData.data['item'];
-        return ItemModel.fromJson(itemData);
+      if (response.statusCode == 201) {
+        final responseData = response.data;
+        dynamic itemData;
+
+        // التحقق من شكل البيانات المستلمة
+        if (responseData['data'] != null &&
+            responseData['data']['item'] != null) {
+          itemData = responseData['data']['item'];
+        } else if (responseData['item'] != null) {
+          itemData = responseData['item'];
+        } else if (responseData is Map<String, dynamic>) {
+          itemData = responseData;
+        } else {
+          itemData = null;
+        }
+
+        if (itemData != null) {
+          return ItemModel.fromJson(itemData);
+        }
       }
       return null;
     } catch (e) {
-      print('Error creating item: $e');
+      developer.log('Error creating item: $e', name: 'ItemsService');
       return null;
     }
   }
@@ -299,7 +262,7 @@ class ItemsService extends GetxService {
       }
       return null;
     } catch (e) {
-      print('Error updating item: $e');
+      developer.log('Error updating item: $e', name: 'ItemsService');
       return null;
     }
   }
@@ -310,7 +273,7 @@ class ItemsService extends GetxService {
       final response = await _apiService.deleteItem(id);
       return response.statusCode == 200;
     } catch (e) {
-      print('Error deleting item: $e');
+      developer.log('Error deleting item: $e', name: 'ItemsService');
       return false;
     }
   }

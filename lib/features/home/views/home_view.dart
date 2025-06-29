@@ -105,7 +105,7 @@ class HomeView extends GetView<HomeController> {
                   ),
                 ],
               ),
-              child: CircularProgressIndicator(
+              child: const CircularProgressIndicator(
                 valueColor:
                     AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
                 strokeWidth: 3,
@@ -146,9 +146,9 @@ class HomeView extends GetView<HomeController> {
         ),
         child: FlexibleSpaceBar(
           titlePadding: const EdgeInsets.only(right: 16, bottom: 16),
-          title: Row(
+          title: const Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Text(
                 'منصة تبادل السلع والعقارات',
                 style: TextStyle(
@@ -273,7 +273,7 @@ class HomeView extends GetView<HomeController> {
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.waving_hand,
                             size: 24,
                             color: AppTheme.primaryColor,
@@ -314,7 +314,7 @@ class HomeView extends GetView<HomeController> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.local_fire_department,
                               color: Colors.orange,
                               size: 16,
@@ -356,7 +356,7 @@ class HomeView extends GetView<HomeController> {
                         Container(
                           width: 6,
                           height: 6,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.green,
                             shape: BoxShape.circle,
                           ),
@@ -435,7 +435,7 @@ class HomeView extends GetView<HomeController> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Obx(() => exchangeService.isLoading
-                                ? SizedBox(
+                                ? const SizedBox(
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
@@ -730,7 +730,7 @@ class HomeView extends GetView<HomeController> {
               children: [
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.flash_on,
                       color: AppTheme.primaryColor,
                       size: 28,
@@ -1300,8 +1300,148 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildTrendingItemsSection(HomeController controller) {
-    if (controller.trendingItems.isEmpty) return const SizedBox.shrink();
+    // إضافة سجلات للتشخيص
+    print('🔍 _buildTrendingItemsSection Debug:');
+    print('🔍 trendingItemsError: "${controller.trendingItemsError.value}"');
+    print('🔍 trendingItems.length: ${controller.trendingItems.length}');
+    print('🔍 trendingItems.isEmpty: ${controller.trendingItems.isEmpty}');
 
+    // إذا كان هناك خطأ في تحميل السلع الرائجة، نعرض رسالة خطأ
+    if (controller.trendingItemsError.isNotEmpty) {
+      print('🔍 Showing error message: ${controller.trendingItemsError.value}');
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'خطأ في تحميل السلع الرائجة',
+                        style: Get.textTheme.bodyMedium?.copyWith(
+                          color: Colors.orange[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        controller.trendingItemsError.value,
+                        style: Get.textTheme.bodySmall?.copyWith(
+                          color: Colors.orange[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    controller.loadTrendingItems();
+                  },
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    size: 16,
+                    color: Colors.orange[700],
+                  ),
+                  label: Text(
+                    'إعادة المحاولة',
+                    style: Get.textTheme.bodySmall?.copyWith(
+                      color: Colors.orange[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    // إذا كانت قائمة السلع الرائجة فارغة، نعرض رسالة بدلاً من إخفاء القسم
+    if (controller.trendingItems.isEmpty) {
+      print('🔍 Showing empty state message');
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.inventory_rounded,
+                  color: Colors.grey[600],
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'لا توجد سلع رائجة حالياً',
+                    style: Get.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    controller.loadTrendingItems();
+                  },
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    size: 16,
+                    color: Colors.grey[600],
+                  ),
+                  label: Text(
+                    'تحديث',
+                    style: Get.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    print(
+        '🔍 Showing trending items section with ${controller.trendingItems.length} items');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1321,7 +1461,7 @@ class HomeView extends GetView<HomeController> {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.trending_up_rounded,
                     color: AppTheme.primaryColor,
                     size: 20,
@@ -1494,7 +1634,7 @@ class HomeView extends GetView<HomeController> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.attach_money_rounded,
                           color: AppTheme.primaryColor,
                           size: 16,
@@ -1629,9 +1769,9 @@ class HomeView extends GetView<HomeController> {
             onPressed: () {
               _showAddItemDialog(context);
             },
-            label: Row(
+            label: const Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Icon(
                   Icons.add_circle_outline,
                   color: Colors.white,

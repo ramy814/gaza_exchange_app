@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import '../controllers/auth_controller.dart';
+import '../../../core/utils/validators.dart';
 
 class RegisterView extends GetView<AuthController> {
   const RegisterView({super.key});
@@ -47,23 +47,19 @@ class RegisterView extends GetView<AuthController> {
                 name: 'name',
                 decoration: const InputDecoration(
                   labelText: 'الاسم الكامل',
-                  hintText: 'أدخل اسمك الكامل',
+                  hintText: 'أحمد محمد',
                   prefixIcon: Icon(Icons.person),
                   border: OutlineInputBorder(),
                 ),
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(
-                    errorText: 'الاسم مطلوب',
-                  ),
-                  FormBuilderValidators.minLength(
-                    3,
-                    errorText: 'الاسم قصير جداً',
-                  ),
-                  FormBuilderValidators.maxLength(
-                    50,
-                    errorText: 'الاسم طويل جداً',
-                  ),
-                ]),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'الاسم مطلوب';
+                  }
+                  if (value.length < 2) {
+                    return 'الاسم يجب أن يكون حرفين على الأقل';
+                  }
+                  return null;
+                },
               ),
 
               const SizedBox(height: 20),
@@ -78,26 +74,19 @@ class RegisterView extends GetView<AuthController> {
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(
-                    errorText: 'رقم الهاتف مطلوب',
-                  ),
-                  (value) {
-                    if (value == null || value.isEmpty) return null;
-
-                    // تحويل الأرقام للإنجليزية للتحقق
-                    final convertedValue =
-                        controller.convertArabicToEnglishNumbers(value);
-
-                    // التحقق من صيغة رقم الهاتف الفلسطيني
-                    final phoneRegex = RegExp(r'^05[0-9]{8}$');
-                    if (!phoneRegex.hasMatch(convertedValue)) {
-                      return 'رقم الهاتف غير صحيح (مثال: 0599123456)';
-                    }
-
-                    return null;
-                  },
-                ]),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'رقم الهاتف مطلوب';
+                  }
+                  // تحويل الأرقام العربية إلى الإنجليزية للتحقق
+                  final cleanValue =
+                      Validators.convertArabicToEnglishNumbers(value);
+                  final phoneRegex = RegExp(r'^(059|056)\d{7}$');
+                  if (!phoneRegex.hasMatch(cleanValue)) {
+                    return 'رقم الهاتف غير صحيح';
+                  }
+                  return null;
+                },
               ),
 
               const SizedBox(height: 20),
@@ -108,76 +97,31 @@ class RegisterView extends GetView<AuthController> {
                   name: 'password',
                   decoration: InputDecoration(
                     labelText: 'كلمة المرور',
-                    hintText: 'أدخل كلمة مرور قوية',
+                    hintText: 'أدخل كلمة المرور',
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
                         controller.isPasswordVisible
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
                       onPressed: controller.togglePasswordVisibility,
                     ),
                     border: const OutlineInputBorder(),
                   ),
                   obscureText: !controller.isPasswordVisible,
-                  validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(
-                      errorText: 'كلمة المرور مطلوبة',
-                    ),
-                    FormBuilderValidators.minLength(
-                      6,
-                      errorText: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
-                    ),
-                    (value) {
-                      if (value == null || value.isEmpty) return null;
-
-                      // تحويل الأرقام للإنجليزية للتحقق
-                      final convertedValue =
-                          controller.convertArabicToEnglishNumbers(value);
-
-                      // طباعة للتأكد من القيم
-                      print('=== Password Field Validation ===');
-                      print('Original value: $value');
-                      print('Converted value: $convertedValue');
-
-                      // التحقق من قوة كلمة المرور
-                      if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*[0-9])')
-                          .hasMatch(convertedValue)) {
-                        return 'كلمة المرور يجب أن تحتوي على أحرف وأرقام';
-                      }
-
-                      // إعادة التحقق من تأكيد كلمة المرور إذا كان موجوداً
-                      final formValues =
-                          controller.registerFormKey.currentState?.value;
-                      if (formValues != null) {
-                        final confirmation =
-                            formValues['password_confirmation'];
-                        if (confirmation != null &&
-                            confirmation.toString().isNotEmpty) {
-                          final convertedConfirmation =
-                              controller.convertArabicToEnglishNumbers(
-                                  confirmation.toString());
-                          print('Confirmation: $confirmation');
-                          print(
-                              'Converted confirmation: $convertedConfirmation');
-                          if (convertedValue != convertedConfirmation) {
-                            print('Passwords do not match!');
-                            // تحديث validation لتأكيد كلمة المرور
-                            Future.delayed(const Duration(milliseconds: 100),
-                                () {
-                              controller.registerFormKey.currentState
-                                  ?.validate();
-                            });
-                          } else {
-                            print('Passwords match!');
-                          }
-                        }
-                      }
-
-                      return null;
-                    },
-                  ]),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'كلمة المرور مطلوبة';
+                    }
+                    // تحويل الأرقام العربية إلى الإنجليزية للتحقق
+                    final cleanValue =
+                        Validators.convertArabicToEnglishNumbers(value);
+                    if (cleanValue.length < 6) {
+                      return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+                    }
+                    return null;
+                  },
                 ),
               ),
 
@@ -190,12 +134,12 @@ class RegisterView extends GetView<AuthController> {
                   decoration: InputDecoration(
                     labelText: 'تأكيد كلمة المرور',
                     hintText: 'أعد إدخال كلمة المرور',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
                         controller.isConfirmPasswordVisible
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
                       onPressed: controller.toggleConfirmPasswordVisibility,
                     ),
@@ -203,36 +147,25 @@ class RegisterView extends GetView<AuthController> {
                   ),
                   obscureText: !controller.isConfirmPasswordVisible,
                   validator: (value) {
-                    final formValues =
-                        controller.registerFormKey.currentState?.value;
-
-                    if (value == null || value.isEmpty) return null;
-                    if (formValues == null) return null;
-
-                    // الحصول على كلمة المرور الأصلية
-                    final password = formValues['password'];
-                    if (password == null || password.toString().isEmpty) {
-                      return null; // لا نتحقق إذا لم يتم إدخال كلمة المرور بعد
+                    if (value == null || value.isEmpty) {
+                      return 'تأكيد كلمة المرور مطلوب';
                     }
 
-                    // تحويل الأرقام للإنجليزية للمقارنة
-                    final convertedValue =
-                        controller.convertArabicToEnglishNumbers(value);
-                    final convertedPassword = controller
-                        .convertArabicToEnglishNumbers(password.toString());
+                    // الحصول على كلمة المرور من النموذج
+                    final password = controller.registerFormKey.currentState
+                            ?.fields['password']?.value
+                            ?.toString() ??
+                        '';
 
-                    // طباعة للتأكد من القيم
-                    print('=== Password Validation ===');
-                    print('Original value: $value');
-                    print('Original password: $password');
-                    print('Converted value: $convertedValue');
-                    print('Converted password: $convertedPassword');
-                    print('Are equal: ${convertedValue == convertedPassword}');
+                    // تحويل الأرقام العربية إلى الإنجليزية للتحقق
+                    final cleanValue =
+                        Validators.convertArabicToEnglishNumbers(value);
+                    final cleanPassword =
+                        Validators.convertArabicToEnglishNumbers(password);
 
-                    if (convertedValue != convertedPassword) {
+                    if (cleanValue != cleanPassword) {
                       return 'كلمة المرور غير متطابقة';
                     }
-
                     return null;
                   },
                 ),

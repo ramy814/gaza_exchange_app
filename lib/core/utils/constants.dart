@@ -1,6 +1,9 @@
 class AppConstants {
+  // Environment configuration
+  static const bool isDevelopment = true; // Set to false for production
+
   // API URLs
-  static const String baseUrl = 'http://localhost:8000/api';
+  static const String baseUrl = 'http://localhost:8000/api/';
 
   // App Info
   static const String appName = 'تبادل غزة';
@@ -49,52 +52,6 @@ class AppConstants {
   static const double defaultLatitude = 31.5017;
   static const double defaultLongitude = 34.4668;
   static const String defaultLocationName = 'غزة، فلسطين';
-
-  // Categories (Main Categories)
-  static const List<Map<String, dynamic>> mainCategories = [
-    {
-      'id': 1,
-      'name': 'الإلكترونيات',
-      'name_en': 'Electronics',
-      'icon': 'fas fa-laptop',
-      'color': '#007bff',
-    },
-    {
-      'id': 2,
-      'name': 'السيارات',
-      'name_en': 'Vehicles',
-      'icon': 'fas fa-car',
-      'color': '#28a745',
-    },
-    {
-      'id': 3,
-      'name': 'الأثاث',
-      'name_en': 'Furniture',
-      'icon': 'fas fa-couch',
-      'color': '#ffc107',
-    },
-    {
-      'id': 4,
-      'name': 'الملابس',
-      'name_en': 'Clothing',
-      'icon': 'fas fa-tshirt',
-      'color': '#dc3545',
-    },
-    {
-      'id': 5,
-      'name': 'الكتب',
-      'name_en': 'Books',
-      'icon': 'fas fa-book',
-      'color': '#6f42c1',
-    },
-    {
-      'id': 6,
-      'name': 'أخرى',
-      'name_en': 'Others',
-      'icon': 'fas fa-ellipsis-h',
-      'color': '#6c757d',
-    },
-  ];
 
   // Property Types
   static const List<String> propertyTypes = ['شقة', 'منزل', 'تجاري', 'أرض'];

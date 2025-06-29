@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'dart:developer' as developer;
 import 'package:gaza_exchange_app/features/properties/models/property_model.dart';
 import 'api_service.dart';
 
@@ -27,38 +28,61 @@ class PropertiesService extends GetxService {
       if (longitude != null) queryParams['longitude'] = longitude;
       if (radius != null) queryParams['radius'] = radius;
 
-      print('Fetching properties with params: $queryParams');
+      developer.log('Fetching properties with params: $queryParams',
+          name: 'PropertiesService');
       final response =
           await _apiService.getAllProperties(queryParameters: queryParams);
 
-      print('Properties response status: ${response.statusCode}');
-      print('Properties response data: ${response.data}');
+      developer.log('Properties response status: ${response.statusCode}',
+          name: 'PropertiesService');
+      developer.log('Properties response data: ${response.data}',
+          name: 'PropertiesService');
 
       if (response.statusCode == 200) {
-        final propertiesData = response.data as List;
-        final List<PropertyModel> properties = [];
-
-        for (int i = 0; i < propertiesData.length; i++) {
-          try {
-            final property = PropertyModel.fromJson(propertiesData[i]);
-            properties.add(property);
-            print('✅ Successfully parsed property ${i + 1}: ${property.title}');
-          } catch (e) {
-            print('❌ Error parsing property ${i + 1}: $e');
-            print('❌ Property data: ${propertiesData[i]}');
-            // Continue with next property instead of failing completely
-          }
+        final responseData = response.data;
+        List<dynamic> propertiesData = [];
+        if (responseData['data'] != null &&
+            responseData['data']['properties'] != null) {
+          propertiesData = responseData['data']['properties'] as List;
+        } else if (responseData['properties'] != null) {
+          propertiesData = responseData['properties'] as List;
+        } else if (responseData is List) {
+          propertiesData = responseData;
         }
-
-        print(
-            '🎯 Successfully parsed ${properties.length} out of ${propertiesData.length} properties');
-        return properties;
+        return _parsePropertiesList(propertiesData);
       }
       return [];
     } catch (e) {
-      print('Error getting all properties: $e');
+      developer.log('Error getting all properties: $e',
+          name: 'PropertiesService');
       return [];
     }
+  }
+
+  // دالة مساعدة لتحليل قائمة العقارات
+  List<PropertyModel> _parsePropertiesList(List propertiesData) {
+    final List<PropertyModel> properties = [];
+
+    for (int i = 0; i < propertiesData.length; i++) {
+      try {
+        final property = PropertyModel.fromJson(propertiesData[i]);
+        properties.add(property);
+        developer.log(
+            '✅ Successfully parsed property ${i + 1}: ${property.title}',
+            name: 'PropertiesService');
+      } catch (e) {
+        developer.log('❌ Error parsing property ${i + 1}: $e',
+            name: 'PropertiesService');
+        developer.log('❌ Property data: ${propertiesData[i]}',
+            name: 'PropertiesService');
+        // Continue with next property instead of failing completely
+      }
+    }
+
+    developer.log(
+        '🎯 Successfully parsed ${properties.length} out of ${propertiesData.length} properties',
+        name: 'PropertiesService');
+    return properties;
   }
 
   // عرض عقار محدد
@@ -66,33 +90,65 @@ class PropertiesService extends GetxService {
     try {
       final response = await _apiService.getProperty(id);
       if (response.statusCode == 200) {
-        return PropertyModel.fromJson(response.data);
+        final responseData = response.data;
+        dynamic propertyData;
+        if (responseData['data'] != null &&
+            responseData['data']['property'] != null) {
+          propertyData = responseData['data']['property'];
+        } else if (responseData['property'] != null) {
+          propertyData = responseData['property'];
+        } else if (responseData is Map<String, dynamic>) {
+          propertyData = responseData;
+        } else {
+          propertyData = null;
+        }
+        if (propertyData != null) {
+          return PropertyModel.fromJson(propertyData);
+        }
       }
       return null;
     } catch (e) {
-      print('Error getting property: $e');
+      developer.log('Error getting property: $e', name: 'PropertiesService');
       return null;
     }
   }
 
   // إضافة عقار جديد
   Future<PropertyModel?> createProperty(
-      Map<String, dynamic> data, String? imagePath) async {
+      Map<String, dynamic> data, List<String> imagePaths) async {
     try {
-      final formData = await _apiService.uploadFile(
+      developer.log('📸 Creating property with ${imagePaths.length} images',
+          name: 'PropertiesService');
+
+      final response = await _apiService.uploadPropertyWithImages(
         'properties',
-        filePath: imagePath ?? '',
-        fieldName: 'image',
-        additionalData: data,
+        imagePaths: imagePaths,
+        data: data,
       );
 
-      if (formData.statusCode == 201) {
-        final propertyData = formData.data['property'];
-        return PropertyModel.fromJson(propertyData);
+      if (response.statusCode == 201) {
+        final responseData = response.data;
+        dynamic propertyData;
+
+        // التحقق من شكل البيانات المستلمة
+        if (responseData['data'] != null &&
+            responseData['data']['property'] != null) {
+          propertyData = responseData['data']['property'];
+        } else if (responseData['property'] != null) {
+          propertyData = responseData['property'];
+        } else if (responseData is Map<String, dynamic>) {
+          propertyData = responseData;
+        } else {
+          propertyData = null;
+        }
+
+        if (propertyData != null) {
+          return PropertyModel.fromJson(propertyData);
+        }
       }
       return null;
     } catch (e) {
-      print('Error creating property: $e');
+      developer.log('Error creating property: $e', name: 'PropertiesService');
       return null;
     }
   }
@@ -109,12 +165,25 @@ class PropertiesService extends GetxService {
       );
 
       if (formData.statusCode == 200) {
-        final propertyData = formData.data['property'];
-        return PropertyModel.fromJson(propertyData);
+        final responseData = formData.data;
+        dynamic propertyData;
+        if (responseData['data'] != null &&
+            responseData['data']['property'] != null) {
+          propertyData = responseData['data']['property'];
+        } else if (responseData['property'] != null) {
+          propertyData = responseData['property'];
+        } else if (responseData is Map<String, dynamic>) {
+          propertyData = responseData;
+        } else {
+          propertyData = null;
+        }
+        if (propertyData != null) {
+          return PropertyModel.fromJson(propertyData);
+        }
       }
       return null;
     } catch (e) {
-      print('Error updating property: $e');
+      developer.log('Error updating property: $e', name: 'PropertiesService');
       return null;
     }
   }
@@ -125,7 +194,7 @@ class PropertiesService extends GetxService {
       final response = await _apiService.deleteProperty(id);
       return response.statusCode == 200;
     } catch (e) {
-      print('Error deleting property: $e');
+      developer.log('Error deleting property: $e', name: 'PropertiesService');
       return false;
     }
   }
@@ -148,18 +217,16 @@ class PropertiesService extends GetxService {
     return await getAllProperties(minPrice: minPrice, maxPrice: maxPrice);
   }
 
-  // Get properties for sale
-  Future<List<PropertyModel>> getPropertiesForSale() async {
-    return await getAllProperties(type: 'buy');
-  }
-
-  // Get properties for rent
-  Future<List<PropertyModel>> getPropertiesForRent() async {
-    return await getAllProperties(type: 'rent');
-  }
-
-  // Get properties for exchange
-  Future<List<PropertyModel>> getPropertiesForExchange() async {
-    return await getAllProperties(type: 'exchange');
+  // Filter properties by location
+  Future<List<PropertyModel>> getPropertiesByLocation({
+    required double latitude,
+    required double longitude,
+    double radius = 10,
+  }) async {
+    return await getAllProperties(
+      latitude: latitude,
+      longitude: longitude,
+      radius: radius,
+    );
   }
 }

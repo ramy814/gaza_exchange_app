@@ -32,15 +32,15 @@ class PropertyDetailView extends GetView<PropertyDetailController> {
                 width: double.infinity,
                 height: 250,
                 color: Colors.grey[200],
-                child: (property.fullImageUrl != null &&
-                        property.fullImageUrl!.isNotEmpty)
+                child: (property.firstImageUrl != null &&
+                        property.firstImageUrl!.isNotEmpty)
                     ? Image.network(
-                        property.fullImageUrl!,
+                        property.firstImageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           print('❌ Error loading property image: $error');
                           print(
-                              '❌ Property image URL: ${property.fullImageUrl}');
+                              '❌ Property image URL: ${property.firstImageUrl}');
                           return const Center(
                             child: Icon(Icons.home_outlined,
                                 size: 60, color: Colors.grey),
@@ -153,6 +153,21 @@ class PropertyDetailView extends GetView<PropertyDetailController> {
                                 ),
                               ],
                             ),
+                            if (property.phone != null &&
+                                property.phone!.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildInfoItem(
+                                      icon: Icons.phone,
+                                      label: 'رقم الهاتف',
+                                      value: property.phone!,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),

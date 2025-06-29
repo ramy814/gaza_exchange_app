@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:gaza_exchange_app/core/models/category_model.dart';
+import 'package:gaza_exchange_app/core/models/api_response_model.dart';
 import 'api_service.dart';
 
 class CategoryService extends GetxService {
@@ -12,10 +13,37 @@ class CategoryService extends GetxService {
     try {
       final response = await _apiService.getAllCategories();
       if (response.statusCode == 200) {
-        final categoriesData = response.data['categories'] as List;
-        return categoriesData
-            .map((category) => CategoryModel.fromJson(category))
-            .toList();
+        final responseData = response.data;
+
+        // التحقق من الشكل الجديد للبيانات
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('success')) {
+          final apiResponse = ApiResponseModel.fromJson(responseData, null);
+
+          if (apiResponse.success && apiResponse.data != null) {
+            final data = apiResponse.data;
+            if (data is Map<String, dynamic> &&
+                data.containsKey('categories')) {
+              final categoriesData = data['categories'] as List;
+              return categoriesData
+                  .map((category) => CategoryModel.fromJson(category))
+                  .toList();
+            } else if (data is List) {
+              return data
+                  .map((category) => CategoryModel.fromJson(category))
+                  .toList();
+            }
+          }
+        } else {
+          // الشكل القديم للبيانات
+          if (responseData is Map<String, dynamic> &&
+              responseData.containsKey('categories')) {
+            final categoriesData = responseData['categories'] as List;
+            return categoriesData
+                .map((category) => CategoryModel.fromJson(category))
+                .toList();
+          }
+        }
       }
       return [];
     } catch (e) {
@@ -34,24 +62,67 @@ class CategoryService extends GetxService {
       print('Categories response data: ${response.data}');
 
       if (response.statusCode == 200) {
-        // Handle nested response structure: {"main_categories": [...]}
-        List<dynamic> categoriesData;
-        if (response.data is Map &&
-            response.data.containsKey('main_categories')) {
-          categoriesData = response.data['main_categories'] as List;
-        } else if (response.data is List) {
-          // Fallback for direct array response
-          categoriesData = response.data as List;
+        final responseData = response.data;
+        List<CategoryModel> categories = [];
+
+        // التحقق من الشكل الجديد للبيانات
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('success')) {
+          final apiResponse = ApiResponseModel.fromJson(responseData, null);
+
+          if (apiResponse.success && apiResponse.data != null) {
+            final data = apiResponse.data;
+            if (data is Map<String, dynamic> &&
+                data.containsKey('main_categories')) {
+              final categoriesData = data['main_categories'] as List;
+              categories = categoriesData
+                  .map((category) => CategoryModel.fromJson(category))
+                  .toList();
+            } else if (data is List) {
+              categories = data
+                  .map((category) => CategoryModel.fromJson(category))
+                  .toList();
+            }
+          }
         } else {
-          print('Unexpected response format: ${response.data.runtimeType}');
-          return [];
+          // الشكل القديم للبيانات
+          if (responseData is Map<String, dynamic> &&
+              responseData.containsKey('main_categories')) {
+            final categoriesData = responseData['main_categories'] as List;
+            categories = categoriesData
+                .map((category) => CategoryModel.fromJson(category))
+                .toList();
+          } else if (responseData is List) {
+            categories = responseData
+                .map((category) => CategoryModel.fromJson(category))
+                .toList();
+          }
         }
 
-        final categories = categoriesData
-            .map((category) => CategoryModel.fromJson(category))
-            .toList();
-        print('Parsed ${categories.length} categories');
-        return categories;
+        // فحص وإزالة التكرار
+        final uniqueCategories = <CategoryModel>[];
+        final seenNames = <String>{};
+
+        for (final category in categories) {
+          // فحص صحة التصنيف
+          if (!category.isValid) {
+            print(
+                '⚠️ Invalid category found: ID=${category.id}, Name="${category.displayName}"');
+            continue;
+          }
+
+          if (!seenNames.contains(category.displayName)) {
+            seenNames.add(category.displayName);
+            uniqueCategories.add(category);
+          } else {
+            print('⚠️ Duplicate category name found: ${category.displayName}');
+          }
+        }
+
+        print(
+            '📊 Categories loaded: ${categories.length} total, ${uniqueCategories.length} unique');
+
+        return uniqueCategories;
       }
       return [];
     } catch (e) {
@@ -65,8 +136,28 @@ class CategoryService extends GetxService {
     try {
       final response = await _apiService.getCategory(id);
       if (response.statusCode == 200) {
-        final categoryData = response.data['category'];
-        return CategoryModel.fromJson(categoryData);
+        final responseData = response.data;
+
+        // التحقق من الشكل الجديد للبيانات
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('success')) {
+          final apiResponse = ApiResponseModel.fromJson(responseData, null);
+
+          if (apiResponse.success && apiResponse.data != null) {
+            final data = apiResponse.data;
+            if (data is Map<String, dynamic> && data.containsKey('category')) {
+              return CategoryModel.fromJson(data['category']);
+            } else if (data is Map<String, dynamic>) {
+              return CategoryModel.fromJson(data);
+            }
+          }
+        } else {
+          // الشكل القديم للبيانات
+          if (responseData is Map<String, dynamic> &&
+              responseData.containsKey('category')) {
+            return CategoryModel.fromJson(responseData['category']);
+          }
+        }
       }
       return null;
     } catch (e) {
@@ -80,10 +171,37 @@ class CategoryService extends GetxService {
     try {
       final response = await _apiService.getSubcategories(categoryId);
       if (response.statusCode == 200) {
-        final subcategoriesData = response.data['subcategories'] as List;
-        return subcategoriesData
-            .map((category) => CategoryModel.fromJson(category))
-            .toList();
+        final responseData = response.data;
+
+        // التحقق من الشكل الجديد للبيانات
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('success')) {
+          final apiResponse = ApiResponseModel.fromJson(responseData, null);
+
+          if (apiResponse.success && apiResponse.data != null) {
+            final data = apiResponse.data;
+            if (data is Map<String, dynamic> &&
+                data.containsKey('subcategories')) {
+              final subcategoriesData = data['subcategories'] as List;
+              return subcategoriesData
+                  .map((category) => CategoryModel.fromJson(category))
+                  .toList();
+            } else if (data is List) {
+              return data
+                  .map((category) => CategoryModel.fromJson(category))
+                  .toList();
+            }
+          }
+        } else {
+          // الشكل القديم للبيانات
+          if (responseData is Map<String, dynamic> &&
+              responseData.containsKey('subcategories')) {
+            final subcategoriesData = responseData['subcategories'] as List;
+            return subcategoriesData
+                .map((category) => CategoryModel.fromJson(category))
+                .toList();
+          }
+        }
       }
       return [];
     } catch (e) {
@@ -97,10 +215,37 @@ class CategoryService extends GetxService {
     try {
       final response = await _apiService.searchCategories(query);
       if (response.statusCode == 200) {
-        final categoriesData = response.data['categories'] as List;
-        return categoriesData
-            .map((category) => CategoryModel.fromJson(category))
-            .toList();
+        final responseData = response.data;
+
+        // التحقق من الشكل الجديد للبيانات
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('success')) {
+          final apiResponse = ApiResponseModel.fromJson(responseData, null);
+
+          if (apiResponse.success && apiResponse.data != null) {
+            final data = apiResponse.data;
+            if (data is Map<String, dynamic> &&
+                data.containsKey('categories')) {
+              final categoriesData = data['categories'] as List;
+              return categoriesData
+                  .map((category) => CategoryModel.fromJson(category))
+                  .toList();
+            } else if (data is List) {
+              return data
+                  .map((category) => CategoryModel.fromJson(category))
+                  .toList();
+            }
+          }
+        } else {
+          // الشكل القديم للبيانات
+          if (responseData is Map<String, dynamic> &&
+              responseData.containsKey('categories')) {
+            final categoriesData = responseData['categories'] as List;
+            return categoriesData
+                .map((category) => CategoryModel.fromJson(category))
+                .toList();
+          }
+        }
       }
       return [];
     } catch (e) {
@@ -114,8 +259,28 @@ class CategoryService extends GetxService {
     try {
       final response = await _apiService.createCategory(data);
       if (response.statusCode == 201) {
-        final categoryData = response.data['category'];
-        return CategoryModel.fromJson(categoryData);
+        final responseData = response.data;
+
+        // التحقق من الشكل الجديد للبيانات
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('success')) {
+          final apiResponse = ApiResponseModel.fromJson(responseData, null);
+
+          if (apiResponse.success && apiResponse.data != null) {
+            final data = apiResponse.data;
+            if (data is Map<String, dynamic> && data.containsKey('category')) {
+              return CategoryModel.fromJson(data['category']);
+            } else if (data is Map<String, dynamic>) {
+              return CategoryModel.fromJson(data);
+            }
+          }
+        } else {
+          // الشكل القديم للبيانات
+          if (responseData is Map<String, dynamic> &&
+              responseData.containsKey('category')) {
+            return CategoryModel.fromJson(responseData['category']);
+          }
+        }
       }
       return null;
     } catch (e) {
@@ -130,8 +295,29 @@ class CategoryService extends GetxService {
     try {
       final response = await _apiService.updateCategory(id, data);
       if (response.statusCode == 200) {
-        final categoryData = response.data['category'];
-        return CategoryModel.fromJson(categoryData);
+        final responseData = response.data;
+
+        // التحقق من الشكل الجديد للبيانات
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('success')) {
+          final apiResponse = ApiResponseModel.fromJson(responseData, null);
+
+          if (apiResponse.success && apiResponse.data != null) {
+            final responseData = apiResponse.data;
+            if (responseData is Map<String, dynamic> &&
+                responseData.containsKey('category')) {
+              return CategoryModel.fromJson(responseData['category']);
+            } else if (responseData is Map<String, dynamic>) {
+              return CategoryModel.fromJson(responseData);
+            }
+          }
+        } else {
+          // الشكل القديم للبيانات
+          if (responseData is Map<String, dynamic> &&
+              responseData.containsKey('category')) {
+            return CategoryModel.fromJson(responseData['category']);
+          }
+        }
       }
       return null;
     } catch (e) {
@@ -144,7 +330,18 @@ class CategoryService extends GetxService {
   Future<bool> deleteCategory(int id) async {
     try {
       final response = await _apiService.deleteCategory(id);
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        // التحقق من الشكل الجديد للبيانات
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('success')) {
+          final apiResponse = ApiResponseModel.fromJson(responseData, null);
+          return apiResponse.success;
+        }
+        return true; // الشكل القديم
+      }
+      return false;
     } catch (e) {
       print('Error deleting category: $e');
       return false;

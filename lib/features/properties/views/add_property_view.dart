@@ -5,6 +5,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'dart:io';
 import '../controllers/add_property_controller.dart';
 import '../../../core/utils/app_theme.dart';
+import '../../../core/utils/validators.dart';
 
 class AddPropertyView extends GetView<AddPropertyController> {
   const AddPropertyView({super.key});
@@ -128,10 +129,9 @@ class AddPropertyView extends GetView<AddPropertyController> {
                   (value) {
                     if (value == null || value.isEmpty) return null;
 
-                    // تحويل الأرقام للإنجليزية للتحقق
-                    final controller = Get.find<AddPropertyController>();
+                    // تحويل الأرقام العربية إلى الإنجليزية للتحقق
                     final convertedValue =
-                        controller.convertArabicToEnglishNumbers(value);
+                        Validators.convertArabicToEnglishNumbers(value);
                     final numValue = double.tryParse(convertedValue);
 
                     if (numValue == null) {
@@ -185,6 +185,26 @@ class AddPropertyView extends GetView<AddPropertyController> {
                   FormBuilderValidators.minLength(
                     5,
                     errorText: 'العنوان قصير جداً',
+                  ),
+                ]),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Phone
+              FormBuilderTextField(
+                name: 'phone',
+                decoration: const InputDecoration(
+                  labelText: 'رقم الهاتف للتواصل',
+                  hintText: 'أدخل رقم الهاتف',
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                keyboardType: TextInputType.phone,
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(errorText: 'رقم الهاتف مطلوب'),
+                  FormBuilderValidators.minLength(
+                    10,
+                    errorText: 'رقم الهاتف قصير جداً',
                   ),
                 ]),
               ),

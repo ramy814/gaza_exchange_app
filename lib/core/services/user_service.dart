@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:gaza_exchange_app/core/models/user_model.dart';
 import 'package:gaza_exchange_app/core/models/statistics_model.dart';
 import 'package:gaza_exchange_app/core/models/recent_activity_model.dart';
+import 'package:gaza_exchange_app/core/models/api_response_model.dart';
 import 'api_service.dart';
 
 class UserService extends GetxService {
@@ -14,8 +15,19 @@ class UserService extends GetxService {
     try {
       final response = await _apiService.getUserProfile();
       if (response.statusCode == 200) {
-        final userData = response.data['user'];
-        return UserModel.fromJson(userData);
+        final responseData = response.data;
+        dynamic userData;
+        if (responseData['data'] != null &&
+            responseData['data']['user'] != null) {
+          userData = responseData['data']['user'];
+        } else if (responseData['user'] != null) {
+          userData = responseData['user'];
+        } else {
+          userData = null;
+        }
+        if (userData != null) {
+          return UserModel.fromJson(userData);
+        }
       }
       return null;
     } catch (e) {
@@ -29,8 +41,19 @@ class UserService extends GetxService {
     try {
       final response = await _apiService.getUserStatistics();
       if (response.statusCode == 200) {
-        final statsData = response.data['statistics'];
-        return StatisticsModel.fromJson(statsData);
+        final responseData = response.data;
+        dynamic statsData;
+        if (responseData['data'] != null &&
+            responseData['data']['statistics'] != null) {
+          statsData = responseData['data']['statistics'];
+        } else if (responseData['statistics'] != null) {
+          statsData = responseData['statistics'];
+        } else {
+          statsData = null;
+        }
+        if (statsData != null) {
+          return StatisticsModel.fromJson(statsData);
+        }
       }
       return null;
     } catch (e) {
@@ -44,9 +67,16 @@ class UserService extends GetxService {
     try {
       final response = await _apiService.getUserRecentActivity();
       if (response.statusCode == 200) {
-        final activitiesData = response.data['recent_activity'] as List;
-        return activitiesData
-            .map((activity) => RecentActivityModel.fromJson(activity))
+        final responseData = response.data;
+        List<dynamic> activities = [];
+        if (responseData['data'] != null &&
+            responseData['data']['recent_activity'] != null) {
+          activities = responseData['data']['recent_activity'] as List;
+        } else if (responseData['recent_activity'] != null) {
+          activities = responseData['recent_activity'] as List;
+        }
+        return activities
+            .map((item) => RecentActivityModel.fromJson(item))
             .toList();
       }
       return [];
@@ -68,7 +98,15 @@ class UserService extends GetxService {
         'longitude': longitude,
         'location_name': locationName,
       });
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        bool success = false;
+        if (responseData['success'] != null) {
+          success = responseData['success'] == true;
+        }
+        return success;
+      }
+      return false;
     } catch (e) {
       print('Error updating user location: $e');
       return false;
@@ -79,10 +117,24 @@ class UserService extends GetxService {
   Future<UserModel?> getProfile() async {
     try {
       final response = await _apiService.getProfile();
-      return UserModel.fromJson(response.data['user']);
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        dynamic userData;
+        if (responseData['data'] != null &&
+            responseData['data']['user'] != null) {
+          userData = responseData['data']['user'];
+        } else if (responseData['user'] != null) {
+          userData = responseData['user'];
+        } else {
+          userData = null;
+        }
+        if (userData != null) {
+          return UserModel.fromJson(userData);
+        }
+      }
+      return null;
     } catch (e) {
       print('Error in getProfile: $e');
-      Get.snackbar('خطأ', 'فشل في تحميل الملف الشخصي');
       return null;
     }
   }
@@ -102,10 +154,25 @@ class UserService extends GetxService {
         'password_confirmation': passwordConfirmation,
       });
 
-      return {
-        'user': UserModel.fromJson(response.data['user']),
-        'token': response.data['token'],
-      };
+      if (response.statusCode == 200) {
+        final apiResponse = ApiResponseModel.fromJson(
+          response.data,
+          (json) => json, // البيانات تحتوي على user و token
+        );
+
+        if (apiResponse.success && apiResponse.data != null) {
+          final data = apiResponse.data as Map<String, dynamic>;
+          return {
+            'user': UserModel.fromJson(data['user']),
+            'token': data['token'],
+          };
+        } else {
+          print('Error: ${apiResponse.message}');
+          Get.snackbar('خطأ', apiResponse.message ?? 'فشل في تسجيل المستخدم');
+          return null;
+        }
+      }
+      return null;
     } catch (e) {
       print('Error in register: $e');
       Get.snackbar('خطأ', 'فشل في تسجيل المستخدم');
@@ -124,10 +191,25 @@ class UserService extends GetxService {
         'password': password,
       });
 
-      return {
-        'user': UserModel.fromJson(response.data['user']),
-        'token': response.data['token'],
-      };
+      if (response.statusCode == 200) {
+        final apiResponse = ApiResponseModel.fromJson(
+          response.data,
+          (json) => json, // البيانات تحتوي على user و token
+        );
+
+        if (apiResponse.success && apiResponse.data != null) {
+          final data = apiResponse.data as Map<String, dynamic>;
+          return {
+            'user': UserModel.fromJson(data['user']),
+            'token': data['token'],
+          };
+        } else {
+          print('Error: ${apiResponse.message}');
+          Get.snackbar('خطأ', apiResponse.message ?? 'فشل في تسجيل الدخول');
+          return null;
+        }
+      }
+      return null;
     } catch (e) {
       print('Error in login: $e');
       Get.snackbar('خطأ', 'فشل في تسجيل الدخول');
@@ -138,8 +220,12 @@ class UserService extends GetxService {
   // Logout user
   Future<bool> logout() async {
     try {
-      await _apiService.logout();
-      return true;
+      final response = await _apiService.logout();
+      if (response.statusCode == 200) {
+        final apiResponse = ApiResponseModel.fromJson(response.data, null);
+        return apiResponse.success;
+      }
+      return false;
     } catch (e) {
       print('Error in logout: $e');
       Get.snackbar('خطأ', 'فشل في تسجيل الخروج');

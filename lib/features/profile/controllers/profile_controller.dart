@@ -28,28 +28,42 @@ class ProfileController extends GetxController {
       final response = await _apiService.getUserProfile();
       if (response.statusCode == 200) {
         final data = response.data;
+        // استخراج بيانات المستخدم من البنية الجديدة أو القديمة
+        dynamic userData;
+        if (data['data'] != null && data['data']['user'] != null) {
+          userData = data['data']['user'];
+        } else if (data['user'] != null) {
+          userData = data['user'];
+        } else {
+          userData = null;
+        }
+        if (userData != null) {
+          user.value = UserModel.fromJson(userData);
 
-        // Set user data
-        user.value = UserModel.fromJson(data['user']);
+          // Set items
+          if (userData['items'] != null) {
+            final List<dynamic> items = userData['items'];
+            userItems.value =
+                items.map((item) => ItemModel.fromJson(item)).toList();
+          }
 
-        // Set items
-        if (data['user']['items'] != null) {
-          final List<dynamic> items = data['user']['items'];
-          userItems.value =
-              items.map((item) => ItemModel.fromJson(item)).toList();
+          // Set properties
+          if (userData['properties'] != null) {
+            final List<dynamic> properties = userData['properties'];
+            userProperties.value = properties
+                .map((property) => PropertyModel.fromJson(property))
+                .toList();
+          }
         }
 
-        // Set properties
-        if (data['user']['properties'] != null) {
-          final List<dynamic> properties = data['user']['properties'];
-          userProperties.value = properties
-              .map((property) => PropertyModel.fromJson(property))
-              .toList();
+        // Set counts (من البنية الجديدة أو القديمة)
+        if (data['data'] != null) {
+          itemsCount.value = data['data']['items_count'] ?? 0;
+          propertiesCount.value = data['data']['properties_count'] ?? 0;
+        } else {
+          itemsCount.value = data['items_count'] ?? 0;
+          propertiesCount.value = data['properties_count'] ?? 0;
         }
-
-        // Set counts
-        itemsCount.value = data['items_count'] ?? 0;
-        propertiesCount.value = data['properties_count'] ?? 0;
       }
     } catch (e) {
       debugPrint('Error loading user profile: $e');

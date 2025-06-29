@@ -7,6 +7,7 @@ import '../services/category_service.dart';
 import '../services/items_service.dart';
 import '../services/properties_service.dart';
 import '../../features/auth/controllers/auth_controller.dart';
+import '../../features/categories/controllers/category_controller.dart';
 
 class InitialBindings extends Bindings {
   @override
@@ -22,5 +23,6 @@ class InitialBindings extends Bindings {
 
     // Controllers
     Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+    Get.lazyPut<CategoryController>(() => CategoryController(), fenix: true);
   }
 }

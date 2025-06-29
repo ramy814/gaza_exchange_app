@@ -2,9 +2,22 @@
 
 ## نظرة عامة
 
-هذا المستند يوضح كيفية استخدام APIs الخاصة بمشروع تبادل السلع والعقارات. جميع الـ APIs تستخدم JSON format وتعيد استجابات JSON.
+هذا المستند يوضح كيفية استخدام APIs الخاصة بمشروع تبادل السلع والعقارات. جميع الـ APIs تستخدم JSON format وتعيد استجابات JSON موحدة.
 
 **Base URL**: `http://localhost:8000/api`
+
+## تنسيق الاستجابة الموحد
+
+جميع الاستجابات تتبع النمط الموحد التالي:
+
+```json
+{
+    "success": true/false,
+    "message": "رسالة توضيحية",
+    "data": {...},
+    "errors": null/[...]
+}
+```
 
 ## المصادقة (Authentication)
 
@@ -34,21 +47,34 @@
 **الاستجابة الناجحة (201):**
 ```json
 {
+    "success": true,
     "message": "User registered successfully",
-    "user": {
-        "id": 1,
-        "name": "أحمد محمد",
-        "phone": "0599123456",
-        "created_at": "2025-01-20T10:30:00.000000Z",
-        "updated_at": "2025-01-20T10:30:00.000000Z"
+    "data": {
+        "user": {
+            "id": 1,
+            "name": "أحمد محمد",
+            "phone": "0599123456",
+            "created_at": "2025-01-20T10:30:00.000000Z",
+            "updated_at": "2025-01-20T10:30:00.000000Z"
+        },
+        "token": "1|abcdef123456789..."
     },
-    "token": "1|abcdef123456789..."
+    "errors": null
 }
 ```
 
-**أخطاء محتملة:**
-- `422`: بيانات غير صحيحة
-- `500`: خطأ في الخادم
+**أخطاء محتملة (422):**
+```json
+{
+    "success": false,
+    "message": "Validation failed",
+    "data": null,
+    "errors": {
+        "phone": ["The phone has already been taken."],
+        "password": ["The password confirmation does not match."]
+    }
+}
+```
 
 ---
 
@@ -67,21 +93,33 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
+    "success": true,
     "message": "Login successful",
-    "user": {
-        "id": 1,
-        "name": "أحمد محمد",
-        "phone": "0599123456",
-        "created_at": "2025-01-20T10:30:00.000000Z",
-        "updated_at": "2025-01-20T10:30:00.000000Z"
+    "data": {
+        "user": {
+            "id": 1,
+            "name": "أحمد محمد",
+            "phone": "0599123456",
+            "created_at": "2025-01-20T10:30:00.000000Z",
+            "updated_at": "2025-01-20T10:30:00.000000Z"
+        },
+        "token": "2|xyz789abc123..."
     },
-    "token": "2|xyz789abc123..."
+    "errors": null
 }
 ```
 
-**أخطاء محتملة:**
-- `422`: بيانات تسجيل دخول خاطئة
-- `500`: خطأ في الخادم
+**أخطاء محتملة (422):**
+```json
+{
+    "success": false,
+    "message": "Invalid credentials",
+    "data": null,
+    "errors": {
+        "phone": ["Invalid phone or password"]
+    }
+}
+```
 
 ---
 
@@ -94,7 +132,10 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "message": "Logged out successfully"
+    "success": true,
+    "message": "Logged out successfully",
+    "data": null,
+    "errors": null
 }
 ```
 
@@ -109,13 +150,18 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "user": {
-        "id": 1,
-        "name": "أحمد محمد",
-        "phone": "0599123456",
-        "created_at": "2025-01-20T10:30:00.000000Z",
-        "updated_at": "2025-01-20T10:30:00.000000Z"
-    }
+    "success": true,
+    "message": "Profile retrieved successfully",
+    "data": {
+        "user": {
+            "id": 1,
+            "name": "أحمد محمد",
+            "phone": "0599123456",
+            "created_at": "2025-01-20T10:30:00.000000Z",
+            "updated_at": "2025-01-20T10:30:00.000000Z"
+        }
+    },
+    "errors": null
 }
 ```
 
@@ -123,7 +169,123 @@
 
 ## 👤 APIs المستخدم (User)
 
-### 1. عرض الملف الشخصي مع الإحصائيات
+### 1. عرض جميع المستخدمين
+
+**GET** `/users`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "success": true,
+    "message": "Users retrieved successfully",
+    "data": {
+        "users": [
+            {
+                "id": 1,
+                "name": "أحمد محمد",
+                "phone": "0599123456",
+                "items": [...],
+                "properties": [...]
+            }
+        ]
+    },
+    "errors": null
+}
+```
+
+---
+
+### 2. عرض مستخدم محدد
+
+**GET** `/users/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "success": true,
+    "message": "User retrieved successfully",
+    "data": {
+        "user": {
+            "id": 1,
+            "name": "أحمد محمد",
+            "phone": "0599123456",
+            "items": [...],
+            "properties": [...]
+        }
+    },
+    "errors": null
+}
+```
+
+**خطأ (404):**
+```json
+{
+    "success": false,
+    "message": "User not found",
+    "data": null,
+    "errors": null
+}
+```
+
+---
+
+### 3. تحديث بيانات المستخدم
+
+**PUT** `/users/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**المعاملات:**
+```json
+{
+    "name": "أحمد محمد محدث",
+    "phone": "0599123457",
+    "location": "غزة، فلسطين"
+}
+```
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "success": true,
+    "message": "User updated successfully",
+    "data": {
+        "user": {
+            "id": 1,
+            "name": "أحمد محمد محدث",
+            "phone": "0599123457",
+            "location": "غزة، فلسطين"
+        }
+    },
+    "errors": null
+}
+```
+
+---
+
+### 4. حذف مستخدم
+
+**DELETE** `/users/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "success": true,
+    "message": "User deleted successfully",
+    "data": null,
+    "errors": null
+}
+```
+
+---
+
+### 5. عرض الملف الشخصي مع الإحصائيات
 
 **GET** `/user/profile`
 
@@ -132,40 +294,45 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "user": {
-        "id": 1,
-        "name": "أحمد محمد",
-        "phone": "0599123456",
-        "latitude": 31.5017,
-        "longitude": 34.4668,
-        "location_name": "غزة، فلسطين",
-        "created_at": "2025-01-20T10:30:00.000000Z",
-        "updated_at": "2025-01-20T10:30:00.000000Z",
-        "items": [
-            {
-                "id": 1,
-                "title": "جهاز كمبيوتر محمول",
-                "price": "1200.00",
-                "status": "available"
-            }
-        ],
-        "properties": [
-            {
-                "id": 1,
-                "title": "شقة للبيع",
-                "price": "85000.00",
-                "type": "buy"
-            }
-        ]
+    "success": true,
+    "message": "Profile retrieved successfully",
+    "data": {
+        "user": {
+            "id": 1,
+            "name": "أحمد محمد",
+            "phone": "0599123456",
+            "latitude": 31.5017,
+            "longitude": 34.4668,
+            "location_name": "غزة، فلسطين",
+            "created_at": "2025-01-20T10:30:00.000000Z",
+            "updated_at": "2025-01-20T10:30:00.000000Z",
+            "items": [
+                {
+                    "id": 1,
+                    "title": "جهاز كمبيوتر محمول",
+                    "price": "1200.00",
+                    "status": "available"
+                }
+            ],
+            "properties": [
+                {
+                    "id": 1,
+                    "title": "شقة للبيع",
+                    "price": "85000.00",
+                    "type": "buy"
+                }
+            ]
+        },
+        "items_count": 1,
+        "properties_count": 1
     },
-    "items_count": 1,
-    "properties_count": 1
+    "errors": null
 }
 ```
 
 ---
 
-### 2. عرض إحصائيات المستخدم
+### 6. عرض إحصائيات المستخدم
 
 **GET** `/user/statistics`
 
@@ -174,25 +341,30 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "statistics": {
-        "total_items": 5,
-        "total_properties": 3,
-        "available_items": 4,
-        "sold_items": 1,
-        "buy_properties": 2,
-        "rent_properties": 1,
-        "recent_items_30_days": 2,
-        "recent_properties_30_days": 1,
-        "total_items_value": "4800.00",
-        "total_properties_value": "250000.00",
-        "total_value": "254800.00"
-    }
+    "success": true,
+    "message": "Statistics retrieved successfully",
+    "data": {
+        "statistics": {
+            "total_items": 5,
+            "total_properties": 3,
+            "available_items": 4,
+            "sold_items": 1,
+            "buy_properties": 2,
+            "rent_properties": 1,
+            "recent_items_30_days": 2,
+            "recent_properties_30_days": 1,
+            "total_items_value": "4800.00",
+            "total_properties_value": "250000.00",
+            "total_value": "254800.00"
+        }
+    },
+    "errors": null
 }
 ```
 
 ---
 
-### 3. عرض النشاط الأخير
+### 7. عرض النشاط الأخير
 
 **GET** `/user/recent-activity`
 
@@ -201,38 +373,43 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "recent_activity": [
-        {
-            "id": 3,
-            "type": "item",
-            "title": "هاتف iPhone 13",
-            "price": "800.00",
-            "status": "available",
-            "created_at": "2025-01-20T15:30:00.000000Z"
-        },
-        {
-            "id": 2,
-            "type": "property",
-            "title": "فيلا للبيع",
-            "price": "120000.00",
-            "status": "buy",
-            "created_at": "2025-01-20T14:20:00.000000Z"
-        },
-        {
-            "id": 1,
-            "type": "item",
-            "title": "جهاز كمبيوتر محمول",
-            "price": "1200.00",
-            "status": "sold",
-            "created_at": "2025-01-20T10:30:00.000000Z"
-        }
-    ]
+    "success": true,
+    "message": "Recent activity retrieved successfully",
+    "data": {
+        "recent_activity": [
+            {
+                "id": 3,
+                "type": "item",
+                "title": "هاتف iPhone 13",
+                "price": "800.00",
+                "status": "available",
+                "created_at": "2025-01-20T15:30:00.000000Z"
+            },
+            {
+                "id": 2,
+                "type": "property",
+                "title": "فيلا للبيع",
+                "price": "120000.00",
+                "status": "buy",
+                "created_at": "2025-01-20T14:20:00.000000Z"
+            },
+            {
+                "id": 1,
+                "type": "item",
+                "title": "جهاز كمبيوتر محمول",
+                "price": "1200.00",
+                "status": "sold",
+                "created_at": "2025-01-20T10:30:00.000000Z"
+            }
+        ]
+    },
+    "errors": null
 }
 ```
 
 ---
 
-### 4. تحديث موقع المستخدم
+### 8. تحديث موقع المستخدم
 
 **PUT** `/user/location`
 
@@ -250,14 +427,18 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
+    "success": true,
     "message": "Location updated successfully",
-    "user": {
-        "id": 1,
-        "name": "أحمد محمد",
-        "latitude": 31.5017,
-        "longitude": 34.4668,
-        "location_name": "غزة، فلسطين"
-    }
+    "data": {
+        "user": {
+            "id": 1,
+            "name": "أحمد محمد",
+            "latitude": 31.5017,
+            "longitude": 34.4668,
+            "location_name": "غزة، فلسطين"
+        }
+    },
+    "errors": null
 }
 ```
 
@@ -272,65 +453,42 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "categories": [
-        {
-            "id": 1,
-            "name": "الإلكترونيات",
-            "name_en": "Electronics",
-            "description": "جميع أنواع الأجهزة الإلكترونية والكهربائية",
-            "icon": "fas fa-laptop",
-            "color": "#007bff",
-            "is_active": true,
-            "sort_order": 1,
-            "children": [
-                {
-                    "id": 7,
-                    "name": "الهواتف الذكية",
-                    "name_en": "Smartphones",
-                    "icon": "fas fa-mobile-alt",
-                    "parent_id": 1,
-                    "sort_order": 1
-                },
-                {
-                    "id": 8,
-                    "name": "الحواسيب المحمولة",
-                    "name_en": "Laptops",
-                    "icon": "fas fa-laptop",
-                    "parent_id": 1,
-                    "sort_order": 2
-                }
-            ]
-        }
-    ]
+    "success": true,
+    "message": "Categories retrieved successfully",
+    "data": {
+        "categories": [
+            {
+                "id": 1,
+                "name": "الإلكترونيات",
+                "description": "جميع أنواع الأجهزة الإلكترونية والكهربائية",
+                "icon": "fas fa-laptop",
+                "parent_id": null,
+                "children": [
+                    {
+                        "id": 7,
+                        "name": "الهواتف الذكية",
+                        "description": "جميع أنواع الهواتف الذكية",
+                        "icon": "fas fa-mobile-alt",
+                        "parent_id": 1
+                    },
+                    {
+                        "id": 8,
+                        "name": "الحواسيب المحمولة",
+                        "description": "جميع أنواع الحواسيب المحمولة",
+                        "icon": "fas fa-laptop",
+                        "parent_id": 1
+                    }
+                ]
+            }
+        ]
+    },
+    "errors": null
 }
 ```
 
 ---
 
-### 2. عرض التصنيفات الرئيسية فقط
-
-**GET** `/categories/main`
-
-**الاستجابة الناجحة (200):**
-```json
-{
-    "main_categories": [
-        {
-            "id": 1,
-            "name": "الإلكترونيات",
-            "name_en": "Electronics",
-            "description": "جميع أنواع الأجهزة الإلكترونية والكهربائية",
-            "icon": "fas fa-laptop",
-            "color": "#007bff",
-            "children": [...]
-        }
-    ]
-}
-```
-
----
-
-### 3. عرض تصنيف محدد
+### 2. عرض تصنيف محدد
 
 **GET** `/categories/{id}`
 
@@ -339,76 +497,36 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "category": {
-        "id": 1,
-        "name": "الإلكترونيات",
-        "name_en": "Electronics",
-        "description": "جميع أنواع الأجهزة الإلكترونية والكهربائية",
-        "icon": "fas fa-laptop",
-        "color": "#007bff",
-        "is_active": true,
-        "sort_order": 1,
-        "children": [...],
-        "parent": null
-    }
-}
-```
-
----
-
-### 4. عرض التصنيفات الفرعية
-
-**GET** `/categories/{id}/subcategories`
-
-**مثال:** `/categories/1/subcategories`
-
-**الاستجابة الناجحة (200):**
-```json
-{
-    "parent_category": {
-        "id": 1,
-        "name": "الإلكترونيات",
-        "name_en": "Electronics"
+    "success": true,
+    "message": "Category retrieved successfully",
+    "data": {
+        "category": {
+            "id": 1,
+            "name": "الإلكترونيات",
+            "description": "جميع أنواع الأجهزة الإلكترونية والكهربائية",
+            "icon": "fas fa-laptop",
+            "parent_id": null,
+            "children": [...],
+            "parent": null
+        }
     },
-    "subcategories": [
-        {
-            "id": 7,
-            "name": "الهواتف الذكية",
-            "name_en": "Smartphones",
-            "icon": "fas fa-mobile-alt",
-            "parent_id": 1,
-            "sort_order": 1
-        }
-    ]
+    "errors": null
 }
 ```
 
----
-
-### 5. البحث في التصنيفات
-
-**GET** `/categories/search?q=هاتف`
-
-**الاستجابة الناجحة (200):**
+**خطأ (404):**
 ```json
 {
-    "categories": [
-        {
-            "id": 7,
-            "name": "الهواتف الذكية",
-            "name_en": "Smartphones",
-            "parent": {
-                "id": 1,
-                "name": "الإلكترونيات"
-            }
-        }
-    ]
+    "success": false,
+    "message": "Category not found",
+    "data": null,
+    "errors": null
 }
 ```
 
 ---
 
-### 6. إنشاء تصنيف جديد (محمي)
+### 3. إنشاء تصنيف جديد
 
 **POST** `/categories`
 
@@ -418,37 +536,33 @@
 ```json
 {
     "name": "تصنيف جديد",
-    "name_en": "New Category",
     "description": "وصف التصنيف",
     "icon": "fas fa-star",
-    "color": "#ff0000",
-    "parent_id": null,
-    "is_active": true,
-    "sort_order": 1
+    "parent_id": null
 }
 ```
 
 **الاستجابة الناجحة (201):**
 ```json
 {
+    "success": true,
     "message": "Category created successfully",
-    "category": {
-        "id": 10,
-        "name": "تصنيف جديد",
-        "name_en": "New Category",
-        "description": "وصف التصنيف",
-        "icon": "fas fa-star",
-        "color": "#ff0000",
-        "parent_id": null,
-        "is_active": true,
-        "sort_order": 1
-    }
+    "data": {
+        "category": {
+            "id": 10,
+            "name": "تصنيف جديد",
+            "description": "وصف التصنيف",
+            "icon": "fas fa-star",
+            "parent_id": null
+        }
+    },
+    "errors": null
 }
 ```
 
 ---
 
-### 7. تحديث تصنيف (محمي)
+### 4. تحديث تصنيف
 
 **PUT** `/categories/{id}`
 
@@ -458,25 +572,29 @@
 ```json
 {
     "name": "تصنيف محدث",
-    "color": "#00ff00"
+    "description": "وصف محدث"
 }
 ```
 
 **الاستجابة الناجحة (200):**
 ```json
 {
+    "success": true,
     "message": "Category updated successfully",
-    "category": {
-        "id": 10,
-        "name": "تصنيف محدث",
-        "color": "#00ff00"
-    }
+    "data": {
+        "category": {
+            "id": 10,
+            "name": "تصنيف محدث",
+            "description": "وصف محدث"
+        }
+    },
+    "errors": null
 }
 ```
 
 ---
 
-### 8. حذف تصنيف (محمي)
+### 5. حذف تصنيف
 
 **DELETE** `/categories/{id}`
 
@@ -485,7 +603,48 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "message": "Category deleted successfully"
+    "success": true,
+    "message": "Category deleted successfully",
+    "data": null,
+    "errors": null
+}
+```
+
+**خطأ (422):**
+```json
+{
+    "success": false,
+    "message": "Cannot delete category with subcategories",
+    "data": null,
+    "errors": null
+}
+```
+
+---
+
+### 6. عرض التصنيفات الفرعية
+
+**GET** `/categories/{id}/subcategories`
+
+**مثال:** `/categories/1/subcategories`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "success": true,
+    "message": "Subcategories retrieved successfully",
+    "data": {
+        "subcategories": [
+            {
+                "id": 7,
+                "name": "الهواتف الذكية",
+                "description": "جميع أنواع الهواتف الذكية",
+                "icon": "fas fa-mobile-alt",
+                "parent_id": 1
+            }
+        ]
+    },
+    "errors": null
 }
 ```
 
@@ -493,149 +652,144 @@
 
 ## 📦 APIs السلع (Items)
 
+> **ملاحظة مهمة حول الصور:**  
+> تم تحديث النظام لدعم حفظ عدة صور لكل سلعة. عند إرسال حقل `images` كمصفوفة، سيتم حفظ كل صورة في جدول منفصل وربطها بالسلعة. عند جلب بيانات السلعة، ستظهر جميع الصور المرتبطة بها في حقل `images`.
+
 ### 1. عرض جميع السلع
 
 **GET** `/items`
 
 **المعاملات الاختيارية:**
-- `category_id`: تصفية حسب التصنيف الرئيسي
-- `subcategory_id`: تصفية حسب التصنيف الفرعي
-- `status`: تصفية حسب الحالة (available, sold)
+- `category_id`: تصفية حسب التصنيف
+- `location`: تصفية حسب الموقع
 - `min_price`: الحد الأدنى للسعر
 - `max_price`: الحد الأقصى للسعر
-- `search`: البحث في العنوان والوصف
-- `latitude`, `longitude`, `radius`: البحث حسب الموقع
+- `status`: تصفية حسب الحالة (available, sold, reserved)
 
-**مثال:** `/items?category_id=1&min_price=500&max_price=2000&search=هاتف`
-
-**الاستجابة الناجحة (200):**
-```json
-[
-    {
-        "id": 1,
-        "user_id": 1,
-        "title": "جهاز كمبيوتر محمول Dell",
-        "description": "جهاز كمبيوتر محمول Dell Inspiron 15، معالج Intel i7، ذاكرة 16GB، بحالة ممتازة",
-        "image": "items/laptop_dell.jpg",
-        "price": "1200.00",
-        "exchange_for": null,
-        "status": "available",
-        "category_id": 1,
-        "subcategory_id": 8,
-        "latitude": 31.5017,
-        "longitude": 34.4668,
-        "location_name": "غزة، فلسطين",
-        "created_at": "2025-01-20T10:30:00.000000Z",
-        "updated_at": "2025-01-20T10:30:00.000000Z",
-        "user": {
-            "id": 1,
-            "name": "أحمد محمد",
-            "phone": "0599123456"
-        },
-        "category": {
-            "id": 1,
-            "name": "الإلكترونيات",
-            "name_en": "Electronics"
-        },
-        "subcategory": {
-            "id": 8,
-            "name": "الحواسيب المحمولة",
-            "name_en": "Laptops"
-        }
-    }
-]
-```
-
----
-
-### 2. عرض السلع القريبة
-
-**GET** `/items/nearby`
-
-**المعاملات المطلوبة:**
-- `latitude`: خط العرض
-- `longitude`: خط الطول
-- `radius`: نصف القطر بالكيلومترات (اختياري، افتراضي 10)
-
-**مثال:** `/items/nearby?latitude=31.5017&longitude=34.4668&radius=5`
+**مثال:** `/items?category_id=1&min_price=500&max_price=2000&status=available`
 
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "nearby_items": [
-        {
-            "id": 1,
-            "title": "جهاز كمبيوتر محمول",
-            "price": "1200.00",
-            "distance": 2.5,
-            "user": {
+    "success": true,
+    "message": "Items retrieved successfully",
+    "data": {
+        "items": [
+            {
                 "id": 1,
-                "name": "أحمد محمد"
-            },
-            "category": {
-                "id": 1,
-                "name": "الإلكترونيات"
+                "user_id": 1,
+                "title": "جهاز كمبيوتر محمول Dell",
+                "description": "جهاز كمبيوتر محمول Dell Inspiron 15، معالج Intel i7، ذاكرة 16GB، بحالة ممتازة",
+                "price": "1200.00",
+                "category_id": 1,
+                "location": "غزة، فلسطين",
+                "condition": "used",
+                "status": "available",
+                "images": ["1705747200_abc123.jpg", "1705747201_def456.jpg"],
+                "created_at": "2025-01-20T10:30:00.000000Z",
+                "updated_at": "2025-01-20T10:30:00.000000Z",
+                "user": {
+                    "id": 1,
+                    "name": "أحمد محمد",
+                    "phone": "0599123456"
+                },
+                "category": {
+                    "id": 1,
+                    "name": "الإلكترونيات"
+                }
             }
+        ],
+        "pagination": {
+            "current_page": 1,
+            "last_page": 5,
+            "per_page": 15,
+            "total": 75
         }
-    ],
-    "search_location": {
-        "latitude": 31.5017,
-        "longitude": 34.4668,
-        "radius_km": 5
-    }
+    },
+    "errors": null
 }
 ```
 
 ---
 
-### 3. عرض السلع الرائجة
+### 2. عرض السلع الرائجة
 
 **GET** `/items/trending`
 
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "trending_items": [
-        {
-            "id": 1,
-            "user_id": 1,
-            "title": "هاتف iPhone 13",
-            "description": "هاتف آيفون 13 بحالة جيدة جداً، 128GB",
-            "image": "items/iphone13.jpg",
-            "price": "800.00",
-            "exchange_for": null,
-            "status": "available",
-            "category_id": 1,
-            "subcategory_id": 7,
-            "latitude": 31.5017,
-            "longitude": 34.4668,
-            "location_name": "غزة، فلسطين",
-            "created_at": "2025-01-20T15:30:00.000000Z",
-            "updated_at": "2025-01-20T15:30:00.000000Z",
-            "user": {
+    "success": true,
+    "message": "Trending items retrieved successfully",
+    "data": {
+        "trending_items": [
+            {
                 "id": 1,
-                "name": "أحمد محمد",
-                "phone": "0599123456"
-            },
-            "category": {
-                "id": 1,
-                "name": "الإلكترونيات",
-                "name_en": "Electronics"
-            },
-            "subcategory": {
-                "id": 7,
-                "name": "الهواتف الذكية",
-                "name_en": "Smartphones"
+                "user_id": 1,
+                "title": "هاتف iPhone 13",
+                "description": "هاتف آيفون 13 بحالة جيدة جداً، 128GB",
+                "price": "800.00",
+                "category_id": 1,
+                "location": "غزة، فلسطين",
+                "condition": "used",
+                "status": "available",
+                "images": ["1705747200_abc123.jpg"],
+                "views": 150,
+                "created_at": "2025-01-20T15:30:00.000000Z",
+                "user": {
+                    "id": 1,
+                    "name": "أحمد محمد",
+                    "phone": "0599123456"
+                },
+                "category": {
+                    "id": 1,
+                    "name": "الإلكترونيات"
+                }
             }
-        }
-    ]
+        ]
+    },
+    "errors": null
 }
 ```
 
-**ملاحظات:**
-- يعرض السلع المتاحة من آخر 7 أيام
-- إذا لم تكن هناك سلع كافية من آخر 7 أيام، يتم إضافة سلع أقدم
-- الحد الأقصى 10 سلع
+---
+
+### 3. البحث في السلع
+
+**GET** `/items/search?query=هاتف`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "success": true,
+    "message": "Search results retrieved successfully",
+    "data": {
+        "items": [
+            {
+                "id": 1,
+                "title": "هاتف iPhone 13",
+                "description": "هاتف آيفون 13 بحالة جيدة جداً",
+                "price": "800.00",
+                "user": {
+                    "id": 1,
+                    "name": "أحمد محمد"
+                },
+                "category": {
+                    "id": 1,
+                    "name": "الإلكترونيات"
+                }
+            }
+        ],
+        "pagination": {
+            "current_page": 1,
+            "last_page": 1,
+            "per_page": 15,
+            "total": 1
+        }
+    },
+    "errors": null
+}
+```
 
 ---
 
@@ -648,36 +802,49 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "id": 1,
-    "user_id": 1,
-    "title": "جهاز كمبيوتر محمول Dell",
-    "description": "جهاز كمبيوتر محمول Dell Inspiron 15، معالج Intel i7، ذاكرة 16GB، بحالة ممتازة",
-    "image": "items/laptop_dell.jpg",
-    "price": "1200.00",
-    "exchange_for": null,
-    "status": "available",
-    "category_id": 1,
-    "subcategory_id": 8,
-    "latitude": 31.5017,
-    "longitude": 34.4668,
-    "location_name": "غزة، فلسطين",
-    "created_at": "2025-01-20T10:30:00.000000Z",
-    "updated_at": "2025-01-20T10:30:00.000000Z",
-    "user": {
-        "id": 1,
-        "name": "أحمد محمد",
-        "phone": "0599123456"
+    "success": true,
+    "message": "Item retrieved successfully",
+    "data": {
+        "item": {
+            "id": 1,
+            "user_id": 1,
+            "title": "جهاز كمبيوتر محمول Dell",
+            "description": "جهاز كمبيوتر محمول Dell Inspiron 15، معالج Intel i7، ذاكرة 16GB، بحالة ممتازة",
+            "price": "1200.00",
+            "category_id": 1,
+            "location": "غزة، فلسطين",
+            "condition": "used",
+            "status": "available",
+            "created_at": "2025-01-20T10:30:00.000000Z",
+            "updated_at": "2025-01-20T10:30:00.000000Z",
+            "user": {
+                "id": 1,
+                "name": "أحمد محمد",
+                "phone": "0599123456"
+            },
+            "category": {
+                "id": 1,
+                "name": "الإلكترونيات"
+            },
+            "images": [
+                {
+                    "id": 1,
+                    "item_id": 1,
+                    "image": "1705747200_abc123.jpg",
+                    "created_at": "2025-01-20T10:30:00.000000Z",
+                    "updated_at": "2025-01-20T10:30:00.000000Z"
+                },
+                {
+                    "id": 2,
+                    "item_id": 1,
+                    "image": "1705747201_def456.jpg",
+                    "created_at": "2025-01-20T10:30:00.000000Z",
+                    "updated_at": "2025-01-20T10:30:00.000000Z"
+                }
+            ]
+        }
     },
-    "category": {
-        "id": 1,
-        "name": "الإلكترونيات",
-        "name_en": "Electronics"
-    },
-    "subcategory": {
-        "id": 8,
-        "name": "الحواسيب المحمولة",
-        "name_en": "Laptops"
-    }
+    "errors": null
 }
 ```
 
@@ -687,61 +854,70 @@
 
 **POST** `/items`
 
-**Headers:** `Authorization: Bearer {token}`, `Content-Type: multipart/form-data`
+**Headers:** `Authorization: Bearer {token}`
 
 **المعاملات:**
 ```json
 {
-    "title": "هاتف iPhone 13",
-    "description": "هاتف آيفون 13 بحالة جيدة جداً، 128GB، مع الشاحن والعلبة الأصلية",
-    "image": "[ملف الصورة]",
-    "price": 800.00,
-    "exchange_for": "Samsung Galaxy S22",
-    "status": "available",
+    "title": "جهاز لابتوب جديد",
+    "description": "جهاز لابتوب بحالة ممتازة",
+    "price": 1500,
     "category_id": 1,
-    "subcategory_id": 7,
-    "latitude": 31.5017,
-    "longitude": 34.4668,
-    "location_name": "غزة، فلسطين"
+    "location": "غزة، فلسطين",
+    "phone": "0599123456",
+    "condition": "used",
+    "status": "available",
+    "images": ["1705747200_abc123.jpg", "1705747201_def456.jpg"]
 }
 ```
 
 **الاستجابة الناجحة (201):**
 ```json
 {
+    "success": true,
     "message": "Item created successfully",
-    "item": {
-        "id": 2,
-        "user_id": 1,
-        "title": "هاتف iPhone 13",
-        "description": "هاتف آيفون 13 بحالة جيدة جداً، 128GB، مع الشاحن والعلبة الأصلية",
-        "image": "items/iphone13_abc123.jpg",
-        "price": "800.00",
-        "exchange_for": "Samsung Galaxy S22",
-        "status": "available",
-        "category_id": 1,
-        "subcategory_id": 7,
-        "latitude": 31.5017,
-        "longitude": 34.4668,
-        "location_name": "غزة، فلسطين",
-        "created_at": "2025-01-20T11:00:00.000000Z",
-        "updated_at": "2025-01-20T11:00:00.000000Z",
-        "user": {
-            "id": 1,
-            "name": "أحمد محمد",
-            "phone": "0599123456"
-        },
-        "category": {
-            "id": 1,
-            "name": "الإلكترونيات",
-            "name_en": "Electronics"
-        },
-        "subcategory": {
-            "id": 7,
-            "name": "الهواتف الذكية",
-            "name_en": "Smartphones"
+    "data": {
+        "item": {
+            "id": 2,
+            "user_id": 1,
+            "title": "جهاز لابتوب جديد",
+            "description": "جهاز لابتوب بحالة ممتازة",
+            "price": "1500.00",
+            "category_id": 1,
+            "location": "غزة، فلسطين",
+            "phone": "0599123456",
+            "condition": "used",
+            "status": "available",
+            "created_at": "2025-01-20T11:00:00.000000Z",
+            "updated_at": "2025-01-20T11:00:00.000000Z",
+            "user": {
+                "id": 1,
+                "name": "أحمد محمد",
+                "phone": "0599123456"
+            },
+            "category": {
+                "id": 1,
+                "name": "الإلكترونيات"
+            },
+            "images": [
+                {
+                    "id": 3,
+                    "item_id": 2,
+                    "image": "1705747200_abc123.jpg",
+                    "created_at": "2025-01-20T11:00:00.000000Z",
+                    "updated_at": "2025-01-20T11:00:00.000000Z"
+                },
+                {
+                    "id": 4,
+                    "item_id": 2,
+                    "image": "1705747201_def456.jpg",
+                    "created_at": "2025-01-20T11:00:00.000000Z",
+                    "updated_at": "2025-01-20T11:00:00.000000Z"
+                }
+            ]
         }
-    }
+    },
+    "errors": null
 }
 ```
 
@@ -751,61 +927,65 @@
 
 **PUT** `/items/{id}`
 
-**Headers:** `Authorization: Bearer {token}`, `Content-Type: multipart/form-data`
+**Headers:** `Authorization: Bearer {token}`
 
 **المعاملات (جميعها اختيارية):**
 ```json
 {
     "title": "هاتف iPhone 13 Pro",
     "description": "وصف محدث للهاتف",
-    "image": "[ملف الصورة الجديد]",
     "price": 850.00,
-    "exchange_for": "Samsung Galaxy S23",
-    "status": "sold",
     "category_id": 1,
-    "subcategory_id": 7,
-    "latitude": 31.5017,
-    "longitude": 34.4668,
-    "location_name": "غزة، فلسطين"
+    "location": "غزة، فلسطين",
+    "phone": "0599123456",
+    "condition": "used",
+    "status": "sold",
+    "images": ["1705747200_abc123.jpg", "1705747201_def456.jpg"]
 }
 ```
 
 **الاستجابة الناجحة (200):**
 ```json
 {
+    "success": true,
     "message": "Item updated successfully",
-    "item": {
-        "id": 2,
-        "user_id": 1,
-        "title": "هاتف iPhone 13 Pro",
-        "description": "وصف محدث للهاتف",
-        "image": "items/iphone13pro_xyz789.jpg",
-        "price": "850.00",
-        "exchange_for": "Samsung Galaxy S23",
-        "status": "sold",
-        "category_id": 1,
-        "subcategory_id": 7,
-        "latitude": 31.5017,
-        "longitude": 34.4668,
-        "location_name": "غزة، فلسطين",
-        "created_at": "2025-01-20T11:00:00.000000Z",
-        "updated_at": "2025-01-20T11:30:00.000000Z",
-        "user": {
-            "id": 1,
-            "name": "أحمد محمد",
-            "phone": "0599123456"
-        },
-        "category": {
-            "id": 1,
-            "name": "الإلكترونيات",
-            "name_en": "Electronics"
-        },
-        "subcategory": {
-            "id": 7,
-            "name": "الهواتف الذكية",
-            "name_en": "Smartphones"
+    "data": {
+        "item": {
+            "id": 2,
+            "user_id": 1,
+            "title": "هاتف iPhone 13 Pro",
+            "description": "وصف محدث للهاتف",
+            "price": "850.00",
+            "category_id": 1,
+            "location": "غزة، فلسطين",
+            "phone": "0599123456",
+            "condition": "used",
+            "status": "sold",
+            "images": ["1705747200_abc123.jpg", "1705747201_def456.jpg"],
+            "created_at": "2025-01-20T11:00:00.000000Z",
+            "updated_at": "2025-01-20T11:30:00.000000Z",
+            "user": {
+                "id": 1,
+                "name": "أحمد محمد",
+                "phone": "0599123456"
+            },
+            "category": {
+                "id": 1,
+                "name": "الإلكترونيات"
+            }
         }
-    }
+    },
+    "errors": null
+}
+```
+
+**خطأ (403):**
+```json
+{
+    "success": false,
+    "message": "You can only update your own items",
+    "data": null,
+    "errors": null
 }
 ```
 
@@ -820,51 +1000,113 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "message": "Item deleted successfully"
+    "success": true,
+    "message": "Item deleted successfully",
+    "data": null,
+    "errors": null
 }
 ```
-
-**أخطاء محتملة:**
-- `403`: غير مخول (السلعة لا تنتمي للمستخدم)
-- `404`: السلعة غير موجودة
 
 ---
 
 ## 🏠 APIs العقارات (Properties)
 
+> **ملاحظة مهمة حول الصور:**  
+> تم تحديث النظام لدعم حفظ عدة صور لكل عقار. عند إرسال حقل `images` كمصفوفة، سيتم حفظ كل صورة في جدول منفصل وربطها بالعقار. عند جلب بيانات العقار، ستظهر جميع الصور المرتبطة به في حقل `images`.
+
 ### 1. عرض جميع العقارات
 
 **GET** `/properties`
 
+**المعاملات الاختيارية:**
+- `type`: تصفية حسب النوع (buy, rent)
+- `location`: تصفية حسب الموقع
+- `min_price`: الحد الأدنى للسعر
+- `max_price`: الحد الأقصى للسعر
+- `status`: تصفية حسب الحالة (available, sold, rented)
+
+**مثال:** `/properties?type=buy&min_price=50000&max_price=150000&status=available`
+
 **الاستجابة الناجحة (200):**
 ```json
-[
-    {
-        "id": 1,
-        "user_id": 1,
-        "title": "شقة 3 غرف للبيع",
-        "description": "شقة مكونة من 3 غرف نوم، صالة، مطبخ، 2 حمام، الطابق الثالث، مساحة 120 متر مربع",
-        "image": "properties/apartment_3rooms.jpg",
-        "price": "85000.00",
-        "address": "حي الرمال، شارع عمر المختار",
-        "type": "buy",
-        "latitude": 31.5017,
-        "longitude": 34.4668,
-        "location_name": "غزة، فلسطين",
-        "created_at": "2025-01-20T10:30:00.000000Z",
-        "updated_at": "2025-01-20T10:30:00.000000Z",
-        "user": {
-            "id": 1,
-            "name": "أحمد محمد",
-            "phone": "0599123456"
+{
+    "success": true,
+    "message": "Properties retrieved successfully",
+    "data": {
+        "properties": [
+            {
+                "id": 1,
+                "user_id": 1,
+                "title": "شقة 3 غرف للبيع",
+                "description": "شقة مكونة من 3 غرف نوم، صالة، مطبخ، 2 حمام، الطابق الثالث، مساحة 120 متر مربع",
+                "price": "85000.00",
+                "type": "buy",
+                "location": "غزة، فلسطين",
+                "bedrooms": 3,
+                "bathrooms": 2,
+                "area": 120,
+                "status": "available",
+                "images": ["1705747200_abc123.jpg", "1705747201_def456.jpg"],
+                "created_at": "2025-01-20T10:30:00.000000Z",
+                "updated_at": "2025-01-20T10:30:00.000000Z",
+                "user": {
+                    "id": 1,
+                    "name": "أحمد محمد",
+                    "phone": "0599123456"
+                }
+            }
+        ],
+        "pagination": {
+            "current_page": 1,
+            "last_page": 3,
+            "per_page": 15,
+            "total": 45
         }
-    }
-]
+    },
+    "errors": null
+}
 ```
 
 ---
 
-### 2. عرض عقار محدد
+### 2. البحث في العقارات
+
+**GET** `/properties/search?query=شقة`
+
+**الاستجابة الناجحة (200):**
+```json
+{
+    "success": true,
+    "message": "Search results retrieved successfully",
+    "data": {
+        "properties": [
+            {
+                "id": 1,
+                "title": "شقة 3 غرف للبيع",
+                "description": "شقة مكونة من 3 غرف نوم",
+                "price": "85000.00",
+                "type": "buy",
+                "location": "غزة، فلسطين",
+                "user": {
+                    "id": 1,
+                    "name": "أحمد محمد"
+                }
+            }
+        ],
+        "pagination": {
+            "current_page": 1,
+            "last_page": 1,
+            "per_page": 15,
+            "total": 1
+        }
+    },
+    "errors": null
+}
+```
+
+---
+
+### 3. عرض عقار محدد
 
 **GET** `/properties/{id}`
 
@@ -873,130 +1115,184 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "id": 1,
-    "user_id": 1,
-    "title": "شقة 3 غرف للبيع",
-    "description": "شقة مكونة من 3 غرف نوم، صالة، مطبخ، 2 حمام، الطابق الثالث، مساحة 120 متر مربع",
-    "image": "properties/apartment_3rooms.jpg",
-    "price": "85000.00",
-    "address": "حي الرمال، شارع عمر المختار",
-    "type": "buy",
-    "latitude": 31.5017,
-    "longitude": 34.4668,
-    "location_name": "غزة، فلسطين",
-    "created_at": "2025-01-20T10:30:00.000000Z",
-    "updated_at": "2025-01-20T10:30:00.000000Z",
-    "user": {
-        "id": 1,
-        "name": "أحمد محمد",
-        "phone": "0599123456"
-    }
+    "success": true,
+    "message": "Property retrieved successfully",
+    "data": {
+        "property": {
+            "id": 1,
+            "user_id": 1,
+            "title": "شقة 3 غرف للبيع",
+            "description": "شقة مكونة من 3 غرف نوم، صالة، مطبخ، 2 حمام، الطابق الثالث، مساحة 120 متر مربع",
+            "price": "85000.00",
+            "type": "buy",
+            "location": "غزة، فلسطين",
+            "bedrooms": 3,
+            "bathrooms": 2,
+            "area": 120,
+            "status": "available",
+            "created_at": "2025-01-20T10:30:00.000000Z",
+            "updated_at": "2025-01-20T10:30:00.000000Z",
+            "user": {
+                "id": 1,
+                "name": "أحمد محمد",
+                "phone": "0599123456"
+            },
+            "images": [
+                {
+                    "id": 1,
+                    "property_id": 1,
+                    "image": "1705747200_abc123.jpg",
+                    "created_at": "2025-01-20T10:30:00.000000Z",
+                    "updated_at": "2025-01-20T10:30:00.000000Z"
+                },
+                {
+                    "id": 2,
+                    "property_id": 1,
+                    "image": "1705747201_def456.jpg",
+                    "created_at": "2025-01-20T10:30:00.000000Z",
+                    "updated_at": "2025-01-20T10:30:00.000000Z"
+                }
+            ]
+        }
+    },
+    "errors": null
 }
 ```
 
 ---
 
-### 3. إضافة عقار جديد
+### 4. إضافة عقار جديد
 
 **POST** `/properties`
 
-**Headers:** `Authorization: Bearer {token}`, `Content-Type: multipart/form-data`
+**Headers:** `Authorization: Bearer {token}`
 
 **المعاملات:**
 ```json
 {
     "title": "فيلا للبيع",
     "description": "فيلا مكونة من طابقين، 5 غرف نوم، 3 حمامات، حديقة كبيرة، مساحة الأرض 300 متر",
-    "image": "[ملف الصورة]",
     "price": 120000.00,
-    "address": "حي النصر، شارع فلسطين",
     "type": "buy",
-    "latitude": 31.5017,
-    "longitude": 34.4668,
-    "location_name": "غزة، فلسطين"
+    "location": "غزة، فلسطين",
+    "phone": "0599123456",
+    "bedrooms": 5,
+    "bathrooms": 3,
+    "area": 300,
+    "status": "available",
+    "images": ["1705747200_abc123.jpg", "1705747201_def456.jpg"]
 }
 ```
 
 **الاستجابة الناجحة (201):**
 ```json
 {
+    "success": true,
     "message": "Property created successfully",
-    "property": {
-        "id": 2,
-        "user_id": 1,
-        "title": "فيلا للبيع",
-        "description": "فيلا مكونة من طابقين، 5 غرف نوم، 3 حمامات، حديقة كبيرة، مساحة الأرض 300 متر",
-        "image": "properties/villa_abc123.jpg",
-        "price": "120000.00",
-        "address": "حي النصر، شارع فلسطين",
-        "type": "buy",
-        "latitude": 31.5017,
-        "longitude": 34.4668,
-        "location_name": "غزة، فلسطين",
-        "created_at": "2025-01-20T11:00:00.000000Z",
-        "updated_at": "2025-01-20T11:00:00.000000Z",
-        "user": {
-            "id": 1,
-            "name": "أحمد محمد",
-            "phone": "0599123456"
+    "data": {
+        "property": {
+            "id": 2,
+            "user_id": 1,
+            "title": "فيلا للبيع",
+            "description": "فيلا مكونة من طابقين، 5 غرف نوم، 3 حمامات، حديقة كبيرة، مساحة الأرض 300 متر",
+            "price": "120000.00",
+            "type": "buy",
+            "location": "غزة، فلسطين",
+            "phone": "0599123456",
+            "bedrooms": 5,
+            "bathrooms": 3,
+            "area": 300,
+            "status": "available",
+            "created_at": "2025-01-20T11:00:00.000000Z",
+            "updated_at": "2025-01-20T11:00:00.000000Z",
+            "user": {
+                "id": 1,
+                "name": "أحمد محمد",
+                "phone": "0599123456"
+            },
+            "images": [
+                {
+                    "id": 3,
+                    "property_id": 2,
+                    "image": "1705747200_abc123.jpg",
+                    "created_at": "2025-01-20T11:00:00.000000Z",
+                    "updated_at": "2025-01-20T11:00:00.000000Z"
+                },
+                {
+                    "id": 4,
+                    "property_id": 2,
+                    "image": "1705747201_def456.jpg",
+                    "created_at": "2025-01-20T11:00:00.000000Z",
+                    "updated_at": "2025-01-20T11:00:00.000000Z"
+                }
+            ]
         }
-    }
+    },
+    "errors": null
 }
 ```
 
 ---
 
-### 4. تحديث عقار
+### 5. تحديث عقار
 
 **PUT** `/properties/{id}`
 
-**Headers:** `Authorization: Bearer {token}`, `Content-Type: multipart/form-data`
+**Headers:** `Authorization: Bearer {token}`
 
 **المعاملات (جميعها اختيارية):**
 ```json
 {
     "title": "فيلا فاخرة للبيع",
     "description": "وصف محدث للفيلا",
-    "image": "[ملف الصورة الجديد]",
     "price": 125000.00,
-    "address": "حي النصر، شارع فلسطين - محدث",
     "type": "buy",
-    "latitude": 31.5017,
-    "longitude": 34.4668,
-    "location_name": "غزة، فلسطين"
+    "location": "غزة، فلسطين",
+    "phone": "0599123456",
+    "bedrooms": 5,
+    "bathrooms": 3,
+    "area": 300,
+    "status": "sold",
+    "images": ["1705747200_abc123.jpg", "1705747201_def456.jpg"]
 }
 ```
 
 **الاستجابة الناجحة (200):**
 ```json
 {
+    "success": true,
     "message": "Property updated successfully",
-    "property": {
-        "id": 2,
-        "user_id": 1,
-        "title": "فيلا فاخرة للبيع",
-        "description": "وصف محدث للفيلا",
-        "image": "properties/villa_updated_xyz789.jpg",
-        "price": "125000.00",
-        "address": "حي النصر، شارع فلسطين - محدث",
-        "type": "buy",
-        "latitude": 31.5017,
-        "longitude": 34.4668,
-        "location_name": "غزة، فلسطين",
-        "created_at": "2025-01-20T11:00:00.000000Z",
-        "updated_at": "2025-01-20T11:30:00.000000Z",
-        "user": {
-            "id": 1,
-            "name": "أحمد محمد",
-            "phone": "0599123456"
+    "data": {
+        "property": {
+            "id": 2,
+            "user_id": 1,
+            "title": "فيلا فاخرة للبيع",
+            "description": "وصف محدث للفيلا",
+            "price": "125000.00",
+            "type": "buy",
+            "location": "غزة، فلسطين",
+            "phone": "0599123456",
+            "bedrooms": 5,
+            "bathrooms": 3,
+            "area": 300,
+            "status": "sold",
+            "images": ["1705747200_abc123.jpg", "1705747201_def456.jpg"],
+            "created_at": "2025-01-20T11:00:00.000000Z",
+            "updated_at": "2025-01-20T11:30:00.000000Z",
+            "user": {
+                "id": 1,
+                "name": "أحمد محمد",
+                "phone": "0599123456"
+            }
         }
-    }
+    },
+    "errors": null
 }
 ```
 
 ---
 
-### 5. حذف عقار
+### 6. حذف عقار
 
 **DELETE** `/properties/{id}`
 
@@ -1005,7 +1301,10 @@
 **الاستجابة الناجحة (200):**
 ```json
 {
-    "message": "Property deleted successfully"
+    "success": true,
+    "message": "Property deleted successfully",
+    "data": null,
+    "errors": null
 }
 ```
 
@@ -1028,7 +1327,7 @@
 
 ## 🔧 أمثلة عملية للاستخدام
 
-### مثال 1: تسجيل مستخدم جديد وإضافة سلعة مع التصنيف والموقع
+### مثال 1: تسجيل مستخدم جديد وإضافة سلعة
 
 ```bash
 # 1. تسجيل مستخدم جديد
@@ -1053,47 +1352,64 @@ curl -X PUT http://localhost:8000/api/user/location \
     "location_name": "غزة، فلسطين"
   }'
 
-# 3. إضافة سلعة مع التصنيف والموقع
+# 3. إضافة سلعة جديدة
 curl -X POST http://localhost:8000/api/items \
   -H "Authorization: Bearer 1|your-token-here" \
   -H "Accept: application/json" \
   -F "title=جهاز لابتوب جديد" \
   -F "description=جهاز لابتوب بحالة ممتازة" \
   -F "price=1500" \
-  -F "status=available" \
   -F "category_id=1" \
-  -F "subcategory_id=8" \
-  -F "latitude=31.5017" \
-  -F "longitude=34.4668" \
-  -F "location_name=غزة، فلسطين" \
-  -F "image=@/path/to/image.jpg"
+  -F "location=غزة، فلسطين" \
+  -F "phone=0599123456" \
+  -F "condition=used" \
+  -F "status=available" \
+  -F "images[]=@image1.jpg" \
+  -F "images[]=@image2.jpg"
 ```
 
-### مثال 2: البحث والفلترة المتقدمة
+### مثال 2: البحث والفلترة
 
 ```bash
 # عرض جميع السلع في تصنيف الإلكترونيات
-curl -X GET "http://localhost:8000/api/items?category_id=1" \
-  -H "Accept: application/json"
-
-# البحث عن السلع القريبة
-curl -X GET "http://localhost:8000/api/items/nearby?latitude=31.5017&longitude=34.4668&radius=5" \
+curl -X GET "http://localhost:8000/api/items?category_id=1&status=available" \
   -H "Accept: application/json"
 
 # البحث في السلع حسب السعر والكلمة المفتاحية
-curl -X GET "http://localhost:8000/api/items?min_price=500&max_price=2000&search=هاتف" \
+curl -X GET "http://localhost:8000/api/items/search?query=هاتف" \
   -H "Accept: application/json"
 
-# عرض التصنيفات الرئيسية
-curl -X GET "http://localhost:8000/api/categories/main" \
+# عرض السلع الرائجة
+curl -X GET "http://localhost:8000/api/items/trending" \
   -H "Accept: application/json"
 
-# البحث في التصنيفات
-curl -X GET "http://localhost:8000/api/categories/search?q=هاتف" \
+# عرض العقارات للبيع
+curl -X GET "http://localhost:8000/api/properties?type=buy&status=available" \
   -H "Accept: application/json"
+
+# البحث في العقارات
+curl -X GET "http://localhost:8000/api/properties/search?query=شقة" \
+  -H "Accept: application/json"
+
+# إضافة عقار جديد مع الصور
+curl -X POST http://localhost:8000/api/properties \
+  -H "Authorization: Bearer 1|your-token-here" \
+  -H "Accept: application/json" \
+  -F "title=فيلا للبيع" \
+  -F "description=فيلا مكونة من طابقين، 5 غرف نوم، 3 حمامات" \
+  -F "price=120000" \
+  -F "type=buy" \
+  -F "location=غزة، فلسطين" \
+  -F "phone=0599123456" \
+  -F "bedrooms=5" \
+  -F "bathrooms=3" \
+  -F "area=300" \
+  -F "status=available" \
+  -F "images[]=@villa1.jpg" \
+  -F "images[]=@villa2.jpg"
 ```
 
-### مثال 3: عرض بيانات المستخدم والموقع
+### مثال 3: إدارة المستخدم
 
 ```bash
 # عرض الملف الشخصي مع الإحصائيات
@@ -1110,23 +1426,41 @@ curl -X GET "http://localhost:8000/api/user/statistics" \
 curl -X GET "http://localhost:8000/api/user/recent-activity" \
   -H "Authorization: Bearer 1|your-token-here" \
   -H "Accept: application/json"
+
+# عرض جميع المستخدمين
+curl -X GET "http://localhost:8000/api/users" \
+  -H "Authorization: Bearer 1|your-token-here" \
+  -H "Accept: application/json"
+
+# حذف صورة محددة من سلعة
+curl -X DELETE "http://localhost:8000/api/items/1/images/2" \
+  -H "Authorization: Bearer 1|your-token-here" \
+  -H "Accept: application/json"
+
+# حذف صورة محددة من عقار
+curl -X DELETE "http://localhost:8000/api/properties/1/images/3" \
+  -H "Authorization: Bearer 1|your-token-here" \
+  -H "Accept: application/json"
 ```
 
 ---
 
 ## 📋 ملاحظات مهمة
 
-1. **الصور**: يجب أن تكون الصور بصيغة (jpeg, png, jpg, gif) وحجم أقصى 2MB
-2. **الأسعار**: يتم حفظ الأسعار كـ decimal بدقة (10,2)
-3. **التواريخ**: جميع التواريخ بصيغة ISO 8601
-4. **الترميز**: يدعم النص العربي والإنجليزي
-5. **الحماية**: جميع العمليات الخاصة تتطلب token صالح
-6. **السلع الرائجة**: تعرض السلع المتاحة من آخر 7 أيام، مع إمكانية إضافة سلع أقدم إذا لم تكن كافية
-7. **النشاط الأخير**: يعرض آخر 10 أنشطة للمستخدم (سلع وعقارات)
-8. **الموقع**: يدعم إحداثيات GPS مع اسم الموقع
-9. **التصنيفات**: نظام تصنيفات رئيسية وفرعية مع دعم الأيقونات والألوان
-10. **البحث الجغرافي**: يستخدم صيغة Haversine لحساب المسافات
-11. **الفلترة المتقدمة**: دعم الفلترة حسب التصنيف، السعر، الحالة، والموقع
+1. **تنسيق الاستجابة الموحد**: جميع الاستجابات تتبع النمط الموحد مع حقول `success`, `message`, `data`, و `errors`
+2. **الصور المتعددة**: تم تحديث النظام لدعم عدة صور لكل سلعة أو عقار مع حفظها في الملفات
+3. **الأسعار**: يتم حفظ الأسعار كـ decimal بدقة (10,2)
+4. **التواريخ**: جميع التواريخ بصيغة ISO 8601
+5. **الترميز**: يدعم النص العربي والإنجليزي
+6. **الحماية**: جميع العمليات الخاصة تتطلب token صالح
+7. **السلع الرائجة**: تعرض السلع حسب عدد المشاهدات
+8. **النشاط الأخير**: يعرض آخر 10 أنشطة للمستخدم (سلع وعقارات)
+9. **الموقع**: يدعم إحداثيات GPS مع اسم الموقع
+10. **التصنيفات**: نظام تصنيفات رئيسية وفرعية مع دعم الأيقونات
+11. **التصفية المتقدمة**: دعم التصفية حسب التصنيف، السعر، الحالة، والموقع
+12. **التصفح**: جميع قوائم العناصر تدعم التصفح مع معلومات الصفحات
+13. **حجم الصور**: الحد الأقصى 2MB لكل صورة
+14. **صيغ الصور**: JPEG, PNG, JPG, GIF مدعومة
 
 ---
 
@@ -1135,7 +1469,10 @@ curl -X GET "http://localhost:8000/api/user/recent-activity" \
 ### خطأ 401 - Unauthorized
 ```json
 {
-    "message": "Unauthenticated."
+    "success": false,
+    "message": "Unauthenticated.",
+    "data": null,
+    "errors": null
 }
 ```
 **الحل**: تأكد من إرسال token صحيح في header
@@ -1143,7 +1480,9 @@ curl -X GET "http://localhost:8000/api/user/recent-activity" \
 ### خطأ 422 - Validation Error
 ```json
 {
-    "message": "The given data was invalid.",
+    "success": false,
+    "message": "Validation failed",
+    "data": null,
     "errors": {
         "phone": ["The phone has already been taken."],
         "password": ["The password confirmation does not match."]
@@ -1155,10 +1494,24 @@ curl -X GET "http://localhost:8000/api/user/recent-activity" \
 ### خطأ 403 - Forbidden
 ```json
 {
-    "message": "Unauthorized"
+    "success": false,
+    "message": "You can only update your own items",
+    "data": null,
+    "errors": null
 }
 ```
 **الحل**: المستخدم لا يملك صلاحية تعديل/حذف هذا العنصر
+
+### خطأ 404 - Not Found
+```json
+{
+    "success": false,
+    "message": "Item not found",
+    "data": null,
+    "errors": null
+}
+```
+**الحل**: العنصر المطلوب غير موجود
 
 ---
 
@@ -1171,5 +1524,251 @@ curl -X GET "http://localhost:8000/api/user/recent-activity" \
 ---
 
 **تم إنشاء هذا المستند في**: يناير 2025  
-**الإصدار**: 2.0  
+**الإصدار**: 3.2  
 **المطور**: Gaza Exchange Team
+
+---
+
+## 🆕 التحديثات الجديدة (يناير 2025)
+
+### دعم الصور المتعددة للسلع والعقارات
+
+تم تحديث النظام لدعم حفظ عدة صور لكل سلعة أو عقار بدلاً من صورة واحدة فقط.
+
+#### التغييرات التقنية:
+
+1. **جداول قاعدة البيانات الجديدة:**
+   - `item_images`: لحفظ مسارات صور السلع
+   - `property_images`: لحفظ مسارات صور العقارات
+
+2. **الموديلات الجديدة:**
+   - `ItemImage`: موديل لصور السلع
+   - `PropertyImage`: موديل لصور العقارات
+
+3. **العلاقات المضافة:**
+   - `Item` → `hasMany(ItemImage)`
+   - `Property` → `hasMany(PropertyImage)`
+
+4. **تخزين الملفات:**
+   - الصور تُحفظ في `storage/app/public/items/` للسلع
+   - الصور تُحفظ في `storage/app/public/properties/` للعقارات
+   - قاعدة البيانات تحتوي على أسماء الملفات فقط
+
+#### كيفية الاستخدام:
+
+**رفع الصور (multipart/form-data):**
+```bash
+curl -X POST http://localhost:8000/api/items \
+  -H "Authorization: Bearer {token}" \
+  -F "title=سلعة جديدة" \
+  -F "description=وصف السلعة" \
+  -F "price=1000" \
+  -F "category_id=1" \
+  -F "location=غزة، فلسطين" \
+  -F "phone=0599123456" \
+  -F "condition=used" \
+  -F "status=available" \
+  -F "images[]=@image1.jpg" \
+  -F "images[]=@image2.jpg" \
+  -F "images[]=@image3.jpg"
+```
+
+**استقبال الصور:**
+```json
+{
+    "id": 1,
+    "title": "سلعة جديدة",
+    "images": [
+        {
+            "id": 1,
+            "item_id": 1,
+            "image": "1705747200_abc123.jpg",
+            "image_url": "/storage/items/1705747200_abc123.jpg",
+            "created_at": "2025-01-20T10:30:00.000000Z"
+        },
+        {
+            "id": 2,
+            "item_id": 1,
+            "image": "1705747201_def456.jpg",
+            "image_url": "/storage/items/1705747201_def456.jpg",
+            "created_at": "2025-01-20T10:30:00.000000Z"
+        }
+    ]
+}
+```
+
+**الوصول للصور:**
+```
+http://localhost:8000/storage/items/1705747200_abc123.jpg
+http://localhost:8000/storage/properties/1705747201_def456.jpg
+```
+
+#### APIs المحدثة:
+
+- **GET** `/items` - يعرض الصور مع كل سلعة مع الروابط الكاملة
+- **GET** `/items/{id}` - يعرض الصور مع السلعة المحددة مع الروابط الكاملة
+- **POST** `/items` - يحفظ الصور المتعددة في الملفات
+- **PUT** `/items/{id}` - يحدث الصور المتعددة
+- **DELETE** `/items/{id}` - يحذف السلعة وجميع صورها
+- **DELETE** `/items/{id}/images/{image_id}` - يحذف صورة محددة
+- **GET** `/items/trending` - يعرض الصور مع السلع الرائجة مع الروابط الكاملة
+- **GET** `/items/search` - يعرض الصور مع نتائج البحث مع الروابط الكاملة
+- **GET** `/properties` - يعرض الصور مع كل عقار مع الروابط الكاملة
+- **GET** `/properties/{id}` - يعرض الصور مع العقار المحدد مع الروابط الكاملة
+- **POST** `/properties` - يحفظ الصور المتعددة في الملفات
+- **PUT** `/properties/{id}` - يحدث الصور المتعددة
+- **DELETE** `/properties/{id}` - يحذف العقار وجميع صوره
+- **DELETE** `/properties/{id}/images/{image_id}` - يحذف صورة محددة
+- **GET** `/properties/search` - يعرض الصور مع نتائج البحث مع الروابط الكاملة
+
+#### المزايا:
+
+1. **مرونة أكبر**: إمكانية إضافة عدد غير محدود من الصور
+2. **تنظيم أفضل**: كل صورة لها معرف فريد وتاريخ إنشاء
+3. **أداء محسن**: تحميل الصور عند الحاجة فقط
+4. **سهولة الإدارة**: إمكانية حذف أو تحديث صور محددة
+5. **حفظ آمن**: الصور تُحفظ في الملفات وليس في قاعدة البيانات
+6. **أسماء فريدة**: كل صورة لها اسم فريد لتجنب التعارض
+7. **حجم محدود**: الحد الأقصى لحجم الصورة 2MB
+8. **صيغ مدعومة**: JPEG, PNG, JPG, GIF
+
+#### متطلبات الصور:
+
+- **الحجم الأقصى**: 2MB لكل صورة
+- **الصيغ المدعومة**: JPEG, PNG, JPG, GIF
+- **الطريقة**: multipart/form-data
+- **الحقل**: images[] (مصفوفة)
+
+---
+
+## 🚀 التحسينات الأخيرة (ديسمبر 2025)
+
+### تحسين عرض الصور مع الروابط الكاملة
+
+تم إجراء تحسينات جوهرية على نظام الصور لضمان عرضها بشكل صحيح في جميع الاستجابات.
+
+#### التحسينات المضافة:
+
+1. **إضافة الروابط الكاملة للصور:**
+   - تم إضافة حقل `image_url` لجميع نماذج الصور
+   - الآن كل صورة تُعرض مع رابطها الكامل للوصول المباشر
+   - لا حاجة لبناء الرابط يدوياً في التطبيق
+
+2. **تحسين نماذج الصور:**
+   ```php
+   // في ItemImage و PropertyImage models
+   protected $appends = ['image_url'];
+   
+   public function getImageUrlAttribute()
+   {
+       return Storage::url('items/' . $this->image);
+   }
+   ```
+
+3. **إصلاح تضارب الروابط:**
+   - تم إعادة ترتيب الروابط في `routes/api.php`
+   - فصل الروابط العامة عن المحمية لتجنب التضارب
+   - إضافة روابط البحث المفقودة
+
+#### مثال على الاستجابة الجديدة:
+
+**قبل التحسين:**
+```json
+{
+    "images": [
+        {
+            "id": 1,
+            "image": "1705747200_abc123.jpg"
+        }
+    ]
+}
+```
+
+**بعد التحسين:**
+```json
+{
+    "images": [
+        {
+            "id": 1,
+            "image": "1705747200_abc123.jpg",
+            "image_url": "/storage/items/1705747200_abc123.jpg"
+        }
+    ]
+}
+```
+
+#### فوائد التحسينات:
+
+1. **سهولة الاستخدام**: الروابط جاهزة للاستخدام المباشر
+2. **توحيد الاستجابات**: جميع APIs تُرجع الصور بنفس الطريقة
+3. **أداء أفضل**: عدم الحاجة لمعالجة الروابط في العميل
+4. **موثوقية أعلى**: ضمان عدم تضارب الروابط
+5. **سهولة الصيانة**: كود أكثر تنظيماً ووضوحاً
+
+#### الروابط المحدثة:
+
+**الروابط العامة:**
+- `GET /api/items` - عرض جميع السلع مع الصور
+- `GET /api/items/trending` - السلع الرائجة مع الصور  
+- `GET /api/items/search` - البحث في السلع مع الصور
+- `GET /api/items/{id}` - عرض سلعة محددة مع الصور
+- `GET /api/properties` - عرض جميع العقارات مع الصور
+- `GET /api/properties/search` - البحث في العقارات مع الصور
+- `GET /api/properties/{id}` - عرض عقار محدد مع الصور
+
+**الروابط المحمية:**
+- `POST /api/items` - إضافة سلعة مع الصور
+- `PUT /api/items/{id}` - تحديث سلعة مع الصور
+- `DELETE /api/items/{id}` - حذف سلعة وصورها
+- `DELETE /api/items/{id}/images/{image_id}` - حذف صورة محددة من سلعة
+- `POST /api/properties` - إضافة عقار مع الصور
+- `PUT /api/properties/{id}` - تحديث عقار مع الصور
+- `DELETE /api/properties/{id}` - حذف العقار وجميع صوره
+- `DELETE /api/properties/{id}/images/{image_id}` - حذف صورة محددة من عقار
+
+#### اختبار التحسينات:
+
+تم إجراء اختبارات شاملة للتأكد من:
+- ✅ عرض الصور بالروابط الصحيحة في جميع APIs
+- ✅ عدم وجود تضارب في الروابط
+- ✅ توحيد تنسيق الاستجابات
+- ✅ الأداء الأمثل للنظام
+
+#### ملاحظة للمطورين:
+
+يمكن الآن استخدام حقل `image_url` مباشرة في العميل دون الحاجة لمعالجة إضافية:
+
+```javascript
+// JavaScript Example
+const images = item.images;
+images.forEach(image => {
+    const imgElement = document.createElement('img');
+    imgElement.src = image.image_url; // استخدام مباشر للرابط
+    document.body.appendChild(imgElement);
+});
+```
+
+```dart
+// Flutter/Dart Example
+Widget buildImageList(List<ItemImage> images) {
+  return ListView.builder(
+    itemCount: images.length,
+    itemBuilder: (context, index) {
+      return Image.network(
+        images[index].imageUrl, // استخدام مباشر للرابط
+        fit: BoxFit.cover,
+      );
+    },
+  );
+}
+```
+
+---
+
+## 📌 ملاحظات الإصدار الحالي
+
+- **تاريخ الإصدار**: ديسمبر 2025
+- **رقم الإصدار**: 3.2.1  
+- **نوع التحديث**: تحسينات وإصلاحات
+- **التوافق**: متوافق تماماً مع الإصدارات السابقة
+- **المطلوب**: لا حاجة لتحديث العميل، التحسينات تلقائية

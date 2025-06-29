@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import '../controllers/auth_controller.dart';
 import '../../../core/utils/app_theme.dart';
+import '../../../core/utils/validators.dart';
 
 class LoginView extends GetView<AuthController> {
   const LoginView({Key? key}) : super(key: key);
@@ -124,38 +124,24 @@ class LoginView extends GetView<AuthController> {
                             decoration: const InputDecoration(
                               labelText: 'رقم الهاتف',
                               hintText: '0599123456',
-                              prefixIcon: Icon(Icons.phone,
-                                  color: AppTheme.primaryGreen),
-                              border: OutlineInputBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(12)),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
+                              prefixIcon: Icon(Icons.phone),
+                              border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.phone,
-                            validator: FormBuilderValidators.compose([
-                              FormBuilderValidators.required(
-                                errorText: 'رقم الهاتف مطلوب',
-                              ),
-                              (value) {
-                                if (value == null || value.isEmpty) return null;
-
-                                // تحويل الأرقام للإنجليزية للتحقق
-                                final controller = Get.find<AuthController>();
-                                final convertedValue = controller
-                                    .convertArabicToEnglishNumbers(value);
-
-                                // التحقق من صيغة رقم الهاتف الفلسطيني
-                                final phoneRegex = RegExp(r'^05[0-9]{8}$');
-                                if (!phoneRegex.hasMatch(convertedValue)) {
-                                  return 'رقم الهاتف غير صحيح (مثال: 0599123456)';
-                                }
-
-                                return null;
-                              },
-                            ]),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'رقم الهاتف مطلوب';
+                              }
+                              // تحويل الأرقام العربية إلى الإنجليزية للتحقق
+                              final cleanValue =
+                                  Validators.convertArabicToEnglishNumbers(
+                                      value);
+                              final phoneRegex = RegExp(r'^(059|056)\d{7}$');
+                              if (!phoneRegex.hasMatch(cleanValue)) {
+                                return 'رقم الهاتف غير صحيح';
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 16),
 
@@ -166,55 +152,32 @@ class LoginView extends GetView<AuthController> {
                               decoration: InputDecoration(
                                 labelText: 'كلمة المرور',
                                 hintText: 'أدخل كلمة المرور',
-                                prefixIcon: const Icon(Icons.lock_outline,
-                                    color: AppTheme.primaryGreen),
+                                prefixIcon: const Icon(Icons.lock),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     controller.isPasswordVisible
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: AppTheme.primaryGreen,
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
                                   ),
                                   onPressed:
                                       controller.togglePasswordVisibility,
                                 ),
-                                border: const OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(12)),
-                                  borderSide: BorderSide.none,
-                                ),
-                                filled: true,
-                                fillColor: Colors.white,
+                                border: const OutlineInputBorder(),
                               ),
                               obscureText: !controller.isPasswordVisible,
-                              validator: FormBuilderValidators.compose([
-                                FormBuilderValidators.required(
-                                  errorText: 'كلمة المرور مطلوبة',
-                                ),
-                                FormBuilderValidators.minLength(
-                                  6,
-                                  errorText:
-                                      'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
-                                ),
-                                (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return null;
-                                  }
-
-                                  // تحويل الأرقام للإنجليزية للتحقق
-                                  final controller = Get.find<AuthController>();
-                                  final convertedValue = controller
-                                      .convertArabicToEnglishNumbers(value);
-
-                                  // التحقق من أن كلمة المرور تحتوي على أحرف وأرقام
-                                  if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*[0-9])')
-                                      .hasMatch(convertedValue)) {
-                                    return 'كلمة المرور يجب أن تحتوي على أحرف وأرقام';
-                                  }
-
-                                  return null;
-                                },
-                              ]),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'كلمة المرور مطلوبة';
+                                }
+                                // تحويل الأرقام العربية إلى الإنجليزية للتحقق
+                                final cleanValue =
+                                    Validators.convertArabicToEnglishNumbers(
+                                        value);
+                                if (cleanValue.length < 6) {
+                                  return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                           const SizedBox(height: 24),

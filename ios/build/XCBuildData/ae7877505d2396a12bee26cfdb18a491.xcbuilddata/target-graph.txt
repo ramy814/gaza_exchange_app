@@ -1,0 +1,58 @@
+Target dependency graph (20 targets)
+Target 'Runner' in project 'Runner'
+➜ Implicit dependency on target 'Pods-Runner' in project 'Pods' via file 'Pods_Runner.framework' in build phase 'Link Binary'
+➜ Implicit dependency on target 'flutter_secure_storage' in project 'Pods' via options '-framework flutter_secure_storage' in build setting 'OTHER_LDFLAGS'
+➜ Implicit dependency on target 'geocoding_ios' in project 'Pods' via options '-framework geocoding_ios' in build setting 'OTHER_LDFLAGS'
+➜ Implicit dependency on target 'geolocator_apple' in project 'Pods' via options '-framework geolocator_apple' in build setting 'OTHER_LDFLAGS'
+➜ Implicit dependency on target 'image_picker_ios' in project 'Pods' via options '-framework image_picker_ios' in build setting 'OTHER_LDFLAGS'
+➜ Implicit dependency on target 'path_provider_foundation' in project 'Pods' via options '-framework path_provider_foundation' in build setting 'OTHER_LDFLAGS'
+➜ Implicit dependency on target 'permission_handler_apple' in project 'Pods' via options '-framework permission_handler_apple' in build setting 'OTHER_LDFLAGS'
+➜ Implicit dependency on target 'shared_preferences_foundation' in project 'Pods' via options '-framework shared_preferences_foundation' in build setting 'OTHER_LDFLAGS'
+➜ Implicit dependency on target 'sqflite_darwin' in project 'Pods' via options '-framework sqflite_darwin' in build setting 'OTHER_LDFLAGS'
+➜ Implicit dependency on target 'url_launcher_ios' in project 'Pods' via options '-framework url_launcher_ios' in build setting 'OTHER_LDFLAGS'
+Target 'Pods-Runner' in project 'Pods'
+➜ Explicit dependency on target 'Flutter' in project 'Pods'
+➜ Explicit dependency on target 'flutter_secure_storage' in project 'Pods'
+➜ Explicit dependency on target 'geocoding_ios' in project 'Pods'
+➜ Explicit dependency on target 'geolocator_apple' in project 'Pods'
+➜ Explicit dependency on target 'image_picker_ios' in project 'Pods'
+➜ Explicit dependency on target 'path_provider_foundation' in project 'Pods'
+➜ Explicit dependency on target 'permission_handler_apple' in project 'Pods'
+➜ Explicit dependency on target 'shared_preferences_foundation' in project 'Pods'
+➜ Explicit dependency on target 'sqflite_darwin' in project 'Pods'
+➜ Explicit dependency on target 'url_launcher_ios' in project 'Pods'
+Target 'url_launcher_ios' in project 'Pods'
+➜ Explicit dependency on target 'Flutter' in project 'Pods'
+➜ Explicit dependency on target 'url_launcher_ios-url_launcher_ios_privacy' in project 'Pods'
+Target 'url_launcher_ios-url_launcher_ios_privacy' in project 'Pods' (no dependencies)
+Target 'sqflite_darwin' in project 'Pods'
+➜ Explicit dependency on target 'Flutter' in project 'Pods'
+➜ Explicit dependency on target 'sqflite_darwin-sqflite_darwin_privacy' in project 'Pods'
+Target 'sqflite_darwin-sqflite_darwin_privacy' in project 'Pods' (no dependencies)
+Target 'shared_preferences_foundation' in project 'Pods'
+➜ Explicit dependency on target 'Flutter' in project 'Pods'
+➜ Explicit dependency on target 'shared_preferences_foundation-shared_preferences_foundation_privacy' in project 'Pods'
+Target 'shared_preferences_foundation-shared_preferences_foundation_privacy' in project 'Pods' (no dependencies)
+Target 'permission_handler_apple' in project 'Pods'
+➜ Explicit dependency on target 'Flutter' in project 'Pods'
+➜ Explicit dependency on target 'permission_handler_apple-permission_handler_apple_privacy' in project 'Pods'
+Target 'permission_handler_apple-permission_handler_apple_privacy' in project 'Pods' (no dependencies)
+Target 'path_provider_foundation' in project 'Pods'
+➜ Explicit dependency on target 'Flutter' in project 'Pods'
+➜ Explicit dependency on target 'path_provider_foundation-path_provider_foundation_privacy' in project 'Pods'
+Target 'path_provider_foundation-path_provider_foundation_privacy' in project 'Pods' (no dependencies)
+Target 'image_picker_ios' in project 'Pods'
+➜ Explicit dependency on target 'Flutter' in project 'Pods'
+➜ Explicit dependency on target 'image_picker_ios-image_picker_ios_privacy' in project 'Pods'
+Target 'image_picker_ios-image_picker_ios_privacy' in project 'Pods' (no dependencies)
+Target 'geolocator_apple' in project 'Pods'
+➜ Explicit dependency on target 'Flutter' in project 'Pods'
+➜ Explicit dependency on target 'geolocator_apple-geolocator_apple_privacy' in project 'Pods'
+Target 'geolocator_apple-geolocator_apple_privacy' in project 'Pods' (no dependencies)
+Target 'geocoding_ios' in project 'Pods'
+➜ Explicit dependency on target 'Flutter' in project 'Pods'
+Target 'flutter_secure_storage' in project 'Pods'
+➜ Explicit dependency on target 'Flutter' in project 'Pods'
+➜ Explicit dependency on target 'flutter_secure_storage-flutter_secure_storage' in project 'Pods'
+Target 'flutter_secure_storage-flutter_secure_storage' in project 'Pods' (no dependencies)
+Target 'Flutter' in project 'Pods' (no dependencies)

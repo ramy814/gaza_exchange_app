@@ -1,24 +1,22 @@
 import 'package:get/get.dart';
+import 'dart:developer' as developer;
 import '../models/item_model.dart';
 import '../../../core/services/items_service.dart';
-import '../../../core/services/category_service.dart';
 import '../../../core/models/category_model.dart';
 import '../../../core/utils/app_routes.dart';
+import '../../categories/controllers/category_controller.dart';
 
 class ItemsController extends GetxController {
   static ItemsController get to => Get.find();
 
   final RxList<ItemModel> _items = <ItemModel>[].obs;
-  final RxList<CategoryModel> _categories = <CategoryModel>[].obs;
-  final RxBool _isLoading = false.obs;
-  final RxBool _isCategoriesLoading = false.obs;
   final RxString _selectedCategoryId = ''.obs;
   final RxString _searchQuery = ''.obs;
 
   List<ItemModel> get items => _items;
-  List<CategoryModel> get categories => _categories;
-  bool get isLoading => _isLoading.value;
-  bool get isCategoriesLoading => _isCategoriesLoading.value;
+  List<CategoryModel> get categories => CategoryController.to.mainCategories;
+  bool get isLoading => false; // سيتم تحديثه لاحقاً
+  bool get isCategoriesLoading => CategoryController.to.isMainCategoriesLoading;
   String get selectedCategoryId => _selectedCategoryId.value;
   String get searchQuery => _searchQuery.value;
 
@@ -29,37 +27,12 @@ class ItemsController extends GetxController {
   }
 
   Future<void> loadInitialData() async {
-    await Future.wait([
-      fetchCategories(),
-      fetchItems(),
-    ]);
-  }
-
-  Future<void> fetchCategories() async {
-    try {
-      _isCategoriesLoading.value = true;
-      final categories = await CategoryService.to.getMainCategories();
-
-      // إضافة "الكل" في البداية
-      final allCategory = CategoryModel(
-        id: 0,
-        name: 'الكل',
-        nameEn: 'All',
-      );
-
-      _categories.value = [allCategory, ...categories];
-    } catch (e) {
-      print('Error fetching categories: $e');
-      Get.snackbar('خطأ', 'فشل في تحميل التصنيفات');
-    } finally {
-      _isCategoriesLoading.value = false;
-    }
+    await fetchItems();
   }
 
   Future<void> fetchItems() async {
     try {
-      _isLoading.value = true;
-      print('🔄 Starting to fetch items...');
+      developer.log('🔄 Starting to fetch items...', name: 'ItemsController');
 
       // تحديد معاملات البحث
       int? categoryId;
@@ -73,8 +46,9 @@ class ItemsController extends GetxController {
         searchQuery = _searchQuery.value;
       }
 
-      print(
-          '🔍 Fetching items with categoryId: $categoryId, searchQuery: $searchQuery');
+      developer.log(
+          '🔍 Fetching items with categoryId: $categoryId, searchQuery: $searchQuery',
+          name: 'ItemsController');
 
       // جلب السلع من الخدمة
       final items = await ItemsService.to.getAllItems(
@@ -82,24 +56,27 @@ class ItemsController extends GetxController {
         search: searchQuery,
       );
 
-      print('📦 Received ${items.length} items from service');
+      developer.log('📦 Received ${items.length} items from service',
+          name: 'ItemsController');
 
       _items.value = items;
-      print('✅ Successfully assigned ${items.length} items to controller');
+      developer.log(
+          '✅ Successfully assigned ${items.length} items to controller',
+          name: 'ItemsController');
 
       // طباعة تفاصيل السلع للتحقق
       for (int i = 0; i < items.length; i++) {
-        print(
-            '📋 Item ${i + 1}: ID=${items[i].id}, Title=${items[i].title}, Price=${items[i].price}');
+        developer.log(
+            '📋 Item ${i + 1}: ID=${items[i].id}, Title=${items[i].title}, Price=${items[i].price}',
+            name: 'ItemsController');
       }
     } catch (e) {
-      print('💥 Error fetching items: $e');
-      print('💥 Error stack trace: ${StackTrace.current}');
+      developer.log('💥 Error fetching items: $e', name: 'ItemsController');
+      developer.log('💥 Error stack trace: ${StackTrace.current}',
+          name: 'ItemsController');
       Get.snackbar('خطأ', 'فشل في تحميل السلع');
-    } finally {
-      _isLoading.value = false;
-      print('🏁 Finished fetching items. Loading state: ${_isLoading.value}');
     }
+    developer.log('🏁 Finished fetching items.', name: 'ItemsController');
   }
 
   Future<void> refreshItems() async {
@@ -137,7 +114,7 @@ class ItemsController extends GetxController {
         Get.snackbar('خطأ', 'فشل في حذف السلعة');
       }
     } catch (e) {
-      print('Error deleting item: $e');
+      developer.log('Error deleting item: $e', name: 'ItemsController');
       Get.snackbar('خطأ', 'فشل في حذف السلعة');
     }
   }
@@ -148,7 +125,7 @@ class ItemsController extends GetxController {
       return 'الكل';
     }
 
-    final category = _categories.firstWhereOrNull(
+    final category = categories.firstWhereOrNull(
       (cat) => cat.id.toString() == _selectedCategoryId.value,
     );
 

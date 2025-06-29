@@ -189,7 +189,30 @@ class ExchangeRateService extends GetxController {
         try {
           print('🔗 محاولة الرابط: $url');
 
-          final response = await _dio.get(
+          // Create a new Dio instance for each request to avoid connection issues
+          final dio.Dio tempDio = dio.Dio(
+            dio.BaseOptions(
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 15),
+              sendTimeout: const Duration(seconds: 15),
+              headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept':
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'ar,en-US;q=0.9,en;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Cache-Control': 'no-cache',
+              },
+            ),
+          );
+
+          final response = await tempDio.get(
             url,
             options: dio.Options(
               followRedirects: true,
@@ -225,7 +248,16 @@ class ExchangeRateService extends GetxController {
       // استخدام API مجاني كبديل
       const url = 'https://api.exchangerate-api.com/v4/latest/ILS';
 
-      final response = await _dio.get(url);
+      // Create a new Dio instance for this request
+      final dio.Dio tempDio = dio.Dio(
+        dio.BaseOptions(
+          connectTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
+          sendTimeout: const Duration(seconds: 15),
+        ),
+      );
+
+      final response = await tempDio.get(url);
 
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data;

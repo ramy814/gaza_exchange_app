@@ -26,13 +26,21 @@ class CategoryModel {
   });
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
+    // فحص إضافي للبيانات
+    final id = json['id'] ?? 0;
+    final name = (json['name'] ?? '').toString().trim();
+    final nameEn = (json['name_en'] ?? '').toString().trim();
+
+    // طباعة معلومات التصنيف للتصحيح
+    print('📋 Creating category: ID=$id, Name="$name", NameEn="$nameEn"');
+
     return CategoryModel(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
-      nameEn: json['name_en'] ?? '',
-      description: json['description'],
-      icon: json['icon'],
-      color: json['color'],
+      id: id,
+      name: name,
+      nameEn: nameEn,
+      description: json['description']?.toString(),
+      icon: json['icon']?.toString(),
+      color: json['color']?.toString(),
       isActive: json['is_active'] ?? true,
       sortOrder: json['sort_order'] ?? 0,
       parentId: json['parent_id'],
@@ -65,4 +73,10 @@ class CategoryModel {
   bool get isMainCategory => parentId == null;
   bool get isSubCategory => parentId != null;
   bool get hasChildren => children != null && children!.isNotEmpty;
+
+  // فحص صحة البيانات
+  bool get isValid => id > 0 && name.isNotEmpty;
+
+  // الحصول على اسم آمن للعرض
+  String get displayName => name.isNotEmpty ? name : 'غير محدد';
 }

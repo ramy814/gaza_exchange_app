@@ -1,13 +1,142 @@
+// Remove the unused import
+// import 'package:get/get.dart';
+
 class Validators {
+  // ===== دوال تحويل الأرقام =====
+
+  // دالة لتحويل الأرقام العربية إلى الإنجليزية
+  static String convertArabicToEnglishNumbers(String input) {
+    return input
+        .replaceAll('٠', '0')
+        .replaceAll('١', '1')
+        .replaceAll('٢', '2')
+        .replaceAll('٣', '3')
+        .replaceAll('٤', '4')
+        .replaceAll('٥', '5')
+        .replaceAll('٦', '6')
+        .replaceAll('٧', '7')
+        .replaceAll('٨', '8')
+        .replaceAll('٩', '9');
+  }
+
+  // دالة لتحويل الأرقام الإنجليزية إلى العربية
+  static String convertEnglishToArabicNumbers(String input) {
+    if (input.isEmpty) return input;
+
+    const Map<String, String> englishToArabic = {
+      '0': '٠',
+      '1': '١',
+      '2': '٢',
+      '3': '٣',
+      '4': '٤',
+      '5': '٥',
+      '6': '٦',
+      '7': '٧',
+      '8': '٨',
+      '9': '٩',
+    };
+
+    String result = input;
+    englishToArabic.forEach((english, arabic) {
+      result = result.replaceAll(english, arabic);
+    });
+
+    return result;
+  }
+
+  // ===== دوال تحويل حالات السلع =====
+
+  // دالة لتحويل حالة السلعة من العربية إلى الإنجليزية
+  static String convertConditionToEnglish(String arabicCondition) {
+    const Map<String, String> conditionMap = {
+      'جديد': 'new',
+      'مستعمل - ممتاز': 'used',
+      'مستعمل - جيد': 'used',
+      'مستعمل - مقبول': 'used',
+    };
+
+    return conditionMap[arabicCondition] ?? 'used';
+  }
+
+  // دالة لتحويل حالة السلعة من الإنجليزية إلى العربية
+  static String convertConditionToArabic(String englishCondition) {
+    const Map<String, String> conditionMap = {
+      'new': 'جديد',
+      'used': 'مستعمل - ممتاز',
+    };
+
+    return conditionMap[englishCondition] ?? 'مستعمل - ممتاز';
+  }
+
+  // ===== دوال تحويل أنواع العقارات =====
+
+  // دالة لتحويل نوع العقار من العربية إلى الإنجليزية
+  static String convertPropertyTypeToEnglish(String arabicType) {
+    const Map<String, String> typeMap = {
+      'بيع': 'buy',
+      'إيجار': 'rent',
+      'تبادل': 'buy', // تحويل التبادل إلى بيع لأن السيرفر لا يدعم exchange
+    };
+
+    return typeMap[arabicType] ?? 'buy';
+  }
+
+  // دالة لتحويل نوع العقار من الإنجليزية إلى العربية
+  static String convertPropertyTypeToArabic(String englishType) {
+    const Map<String, String> typeMap = {
+      'buy': 'بيع',
+      'rent': 'إيجار',
+    };
+
+    return typeMap[englishType] ?? 'بيع';
+  }
+
+  // ===== دوال تحويل حالات السلع =====
+
+  // دالة لتحويل حالة السلعة من العربية إلى الإنجليزية
+  static String convertItemStatusToEnglish(String arabicStatus) {
+    const Map<String, String> statusMap = {
+      'متاح': 'available',
+      'مباع': 'sold',
+      'محجوز': 'reserved',
+    };
+
+    return statusMap[arabicStatus] ?? 'available';
+  }
+
+  // دالة لتحويل حالة السلعة من الإنجليزية إلى العربية
+  static String convertItemStatusToArabic(String englishStatus) {
+    const Map<String, String> statusMap = {
+      'available': 'متاح',
+      'sold': 'مباع',
+      'reserved': 'محجوز',
+    };
+
+    return statusMap[englishStatus] ?? 'متاح';
+  }
+
+  // ===== دوال مساعدة =====
+
+  // دالة لتنظيف النص من الأحرف غير المرغوبة
+  static String cleanText(String text) {
+    // إزالة الأحرف الخاصة والرموز غير المرغوبة
+    return text.trim().replaceAll(RegExp(r'[^\w\s\u0600-\u06FF]'), '');
+  }
+
+  // ===== دوال التحقق من صحة البيانات =====
+
   // Phone validation for Palestinian numbers
   static String? validatePhone(String? value) {
     if (value == null || value.isEmpty) {
       return 'رقم الهاتف مطلوب';
     }
 
+    // تحويل الأرقام العربية إلى الإنجليزية أولاً
+    String cleanValue = convertArabicToEnglishNumbers(value);
+
     // Palestinian phone number format: 059xxxxxxxx or 056xxxxxxxx
     final phoneRegex = RegExp(r'^(059|056)\d{7}$');
-    if (!phoneRegex.hasMatch(value)) {
+    if (!phoneRegex.hasMatch(cleanValue)) {
       return 'رقم الهاتف غير صحيح';
     }
 
@@ -93,7 +222,9 @@ class Validators {
       return 'السعر مطلوب';
     }
 
-    final price = double.tryParse(value);
+    // تحويل الأرقام العربية إلى الإنجليزية أولاً
+    String cleanValue = convertArabicToEnglishNumbers(value);
+    final price = double.tryParse(cleanValue);
     if (price == null || price <= 0) {
       return 'السعر يجب أن يكون رقم موجب';
     }
@@ -209,11 +340,16 @@ class Validators {
     return null;
   }
 
+  // ===== دوال التحقق البولينية =====
+
   // مصادقة رقم الهاتف الفلسطيني
   static bool isValidPhone(String phone) {
+    // تحويل الأرقام العربية إلى الإنجليزية أولاً
+    String cleanPhone = convertArabicToEnglishNumbers(phone);
+
     // رقم هاتف فلسطيني: يبدأ بـ 059 أو 056 أو 057
     final phoneRegex = RegExp(r'^(059|056|057)\d{7}$');
-    return phoneRegex.hasMatch(phone);
+    return phoneRegex.hasMatch(cleanPhone);
   }
 
   // مصادقة كلمة المرور
@@ -245,10 +381,13 @@ class Validators {
 
   // مصادقة السعر
   static bool isValidPrice(String price) {
-    final priceRegex = RegExp(r'^\d+(\.\d{1,2})?$');
-    if (!priceRegex.hasMatch(price)) return false;
+    // تحويل الأرقام العربية إلى الإنجليزية أولاً
+    String cleanPrice = convertArabicToEnglishNumbers(price);
 
-    final priceValue = double.tryParse(price);
+    final priceRegex = RegExp(r'^\d+(\.\d{1,2})?$');
+    if (!priceRegex.hasMatch(cleanPrice)) return false;
+
+    final priceValue = double.tryParse(cleanPrice);
     return priceValue != null && priceValue > 0;
   }
 
@@ -268,44 +407,11 @@ class Validators {
 
   // مصادقة نوع العقار
   static bool isValidPropertyType(String type) {
-    return ['buy', 'rent', 'exchange'].contains(type);
+    return ['buy', 'rent'].contains(type);
   }
 
   // مصادقة حالة السلعة
   static bool isValidItemStatus(String status) {
     return ['available', 'sold'].contains(status);
-  }
-
-  // رسائل الخطأ
-  static String getPhoneErrorMessage() {
-    return 'يرجى إدخال رقم هاتف صحيح (مثال: 0599123456)';
-  }
-
-  static String getPasswordErrorMessage() {
-    return 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
-  }
-
-  static String getEmailErrorMessage() {
-    return 'يرجى إدخال بريد إلكتروني صحيح';
-  }
-
-  static String getNameErrorMessage() {
-    return 'الاسم يجب أن يكون حرفين على الأقل';
-  }
-
-  static String getTitleErrorMessage() {
-    return 'العنوان يجب أن يكون 3 أحرف على الأقل';
-  }
-
-  static String getDescriptionErrorMessage() {
-    return 'الوصف يجب أن يكون 10 أحرف على الأقل';
-  }
-
-  static String getPriceErrorMessage() {
-    return 'يرجى إدخال سعر صحيح أكبر من صفر';
-  }
-
-  static String getLocationErrorMessage() {
-    return 'يرجى تحديد موقع صحيح';
   }
 }

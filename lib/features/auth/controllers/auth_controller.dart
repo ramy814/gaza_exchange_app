@@ -1,11 +1,12 @@
 import 'package:get/get.dart';
+import 'dart:developer' as developer;
 import '../../../core/services/api_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/utils/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:dio/dio.dart' as dio;
+import '../../../core/utils/validators.dart';
 
 class AuthController extends GetxController {
   static AuthController get to => Get.find();
@@ -32,8 +33,16 @@ class AuthController extends GetxController {
 
   Future<void> _checkAuthStatus() async {
     final token = await StorageService.to.readSecure('auth_token');
+    developer.log('🔍 Checking auth status...', name: 'AuthController');
+    developer.log('🔍 Token available: ${token != null}',
+        name: 'AuthController');
     if (token != null) {
+      developer.log('🔍 Token found, getting user profile...',
+          name: 'AuthController');
       await _getUserProfile();
+    } else {
+      developer.log('🔍 No token found, user not authenticated',
+          name: 'AuthController');
     }
   }
 
@@ -43,35 +52,6 @@ class AuthController extends GetxController {
 
   void toggleConfirmPasswordVisibility() {
     _isConfirmPasswordVisible.value = !_isConfirmPasswordVisible.value;
-  }
-
-  // دالة لتحويل الأرقام العربية للإنجليزية
-  String convertArabicToEnglishNumbers(String input) {
-    if (input.isEmpty) return input;
-
-    const Map<String, String> arabicToEnglish = {
-      '٠': '0',
-      '١': '1',
-      '٢': '2',
-      '٣': '3',
-      '٤': '4',
-      '٥': '5',
-      '٦': '6',
-      '٧': '7',
-      '٨': '8',
-      '٩': '9',
-    };
-
-    String result = input;
-    arabicToEnglish.forEach((arabic, english) {
-      result = result.replaceAll(arabic, english);
-    });
-
-    print('=== Number Conversion ===');
-    print('Input: $input');
-    print('Output: $result');
-
-    return result;
   }
 
   Future<void> login() async {
@@ -89,120 +69,82 @@ class AuthController extends GetxController {
     try {
       _isLoading.value = true;
 
-      // اختبار الاتصال أولاً
-      print('=== Testing Connection ===');
-      final isConnected = await ApiService.to.testConnection();
-      if (!isConnected) {
-        Get.snackbar(
-          'خطأ في الاتصال',
-          'لا يمكن الاتصال بالسيرفر، تأكد من أن السيرفر يعمل',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          icon: const Icon(Icons.error, color: Colors.white),
-        );
-        return;
-      }
-
       final values = loginFormKey.currentState!.value;
 
-      // تحويل الأرقام العربية للإنجليزية
-      final phone =
-          convertArabicToEnglishNumbers(values['phone'].toString().trim());
-      final password =
-          convertArabicToEnglishNumbers(values['password'].toString());
+      // تحويل الأرقام العربية إلى الإنجليزية باستخدام الدالة العامة
+      final phone = Validators.convertArabicToEnglishNumbers(
+          values['phone'].toString().trim());
+      final password = Validators.convertArabicToEnglishNumbers(
+          values['password'].toString());
 
-      final requestData = {
+      developer.log('=== Login Data ===', name: 'AuthController');
+      developer.log('Phone: $phone', name: 'AuthController');
+      developer.log('Password: $password', name: 'AuthController');
+
+      final response = await ApiService.to.login({
         'phone': phone,
         'password': password,
-      };
+      });
 
-      print('=== Login Request Data ===');
-      print('Phone: $phone (original: ${values['phone']})');
-      print('Password Length: ${password.length}');
-
-      final response = await ApiService.to.login(requestData);
-
-      print('=== Login Response ===');
-      print('Status Code: ${response.statusCode}');
-      print('Response Data: ${response.data}');
+      developer.log('=== Login Response ===', name: 'AuthController');
+      developer.log('Status Code: ${response.statusCode}',
+          name: 'AuthController');
+      developer.log('Response Data: ${response.data}', name: 'AuthController');
 
       if (response.statusCode == 200) {
-        // حفظ بيانات المستخدم والـ token
-        final responseData = response.data;
+        final data = response.data['data'];
+        final token = data['token'];
+        final user = data['user'];
 
-        if (responseData['token'] != null) {
-          await StorageService.to
-              .writeSecure('auth_token', responseData['token']);
-        }
+        // حفظ البيانات
+        await StorageService.to.writeSecure('auth_token', token);
+        await StorageService.to.writeSecure('user_data', user.toString());
 
-        if (responseData['user'] != null) {
-          try {
-            await StorageService.to
-                .writeSecure('user_data', responseData['user'].toString());
-            _user.value = UserModel.fromJson(responseData['user']);
-          } catch (parseError) {
-            print('=== User Data Parse Error ===');
-            print('Error parsing user data: $parseError');
-            print('User data: ${responseData['user']}');
-
-            // إذا فشل في تحليل بيانات المستخدم، نستمر مع الـ token فقط
-            Get.snackbar(
-              'تحذير',
-              'تم تسجيل الدخول بنجاح، لكن هناك مشكلة في تحميل البيانات الشخصية',
-              backgroundColor: Colors.orange,
-              colorText: Colors.white,
-              icon: const Icon(Icons.warning, color: Colors.white),
-              snackPosition: SnackPosition.TOP,
-              duration: const Duration(seconds: 3),
-              margin: const EdgeInsets.all(16),
-              borderRadius: 8,
-            );
-          }
-        }
-
+        Get.offAllNamed(AppRoutes.home);
         Get.snackbar(
-          'نجح',
-          'تم تسجيل الدخول بنجاح',
+          '🎉 تم تسجيل الدخول بنجاح',
+          'مرحباً بك في تطبيق تبادل غزة',
           backgroundColor: Colors.green,
           colorText: Colors.white,
-          icon: const Icon(Icons.check_circle, color: Colors.white),
-          snackPosition: SnackPosition.TOP,
           duration: const Duration(seconds: 3),
+          snackPosition: SnackPosition.TOP,
           margin: const EdgeInsets.all(16),
-          borderRadius: 8,
+          borderRadius: 12,
+          icon: const Icon(
+            Icons.check_circle,
+            color: Colors.white,
+            size: 24,
+          ),
         );
-
-        // الانتقال للصفحة الرئيسية
-        Get.offAllNamed(AppRoutes.home);
       }
     } catch (e) {
-      print('=== Login Error ===');
-      print('Error: $e');
+      developer.log('=== Login Error ===', name: 'AuthController');
+      developer.log('Error type: ${e.runtimeType}', name: 'AuthController');
+      developer.log('Error message: $e', name: 'AuthController');
 
-      String errorMessage = 'فشل في تسجيل الدخول';
-
-      if (e is dio.DioException) {
-        print('DioError Type: ${e.type}');
-        print('DioError Response: ${e.response?.data}');
-        print('DioError Status Code: ${e.response?.statusCode}');
-
-        if (e.response?.statusCode == 422) {
-          errorMessage = 'رقم الهاتف أو كلمة المرور غير صحيحة';
-        } else if (e.response?.statusCode == 500) {
-          errorMessage = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
-        }
+      String errorMessage = 'حدث خطأ أثناء تسجيل الدخول';
+      if (e.toString().contains('422')) {
+        errorMessage = 'رقم الهاتف أو كلمة المرور غير صحيحة';
+      } else if (e.toString().contains('401')) {
+        errorMessage = 'بيانات غير صحيحة';
+      } else if (e.toString().contains('500')) {
+        errorMessage = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
       }
 
       Get.snackbar(
-        'خطأ',
+        '❌ خطأ في تسجيل الدخول',
         errorMessage,
         backgroundColor: Colors.red,
         colorText: Colors.white,
-        icon: const Icon(Icons.error, color: Colors.white),
+        duration: const Duration(seconds: 4),
         snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 5),
         margin: const EdgeInsets.all(16),
-        borderRadius: 8,
+        borderRadius: 12,
+        icon: const Icon(
+          Icons.error,
+          color: Colors.white,
+          size: 24,
+        ),
       );
     } finally {
       _isLoading.value = false;
@@ -224,169 +166,101 @@ class AuthController extends GetxController {
     try {
       _isLoading.value = true;
 
-      // اختبار الاتصال أولاً
-      print('=== Testing Connection ===');
-      final isConnected = await ApiService.to.testConnection();
-      if (!isConnected) {
+      final values = registerFormKey.currentState!.value;
+
+      // تحويل الأرقام العربية إلى الإنجليزية باستخدام الدالة العامة
+      final name = values['name'].toString().trim();
+      final phone = Validators.convertArabicToEnglishNumbers(
+          values['phone'].toString().trim());
+      final password = Validators.convertArabicToEnglishNumbers(
+          values['password'].toString());
+      final passwordConfirmation = Validators.convertArabicToEnglishNumbers(
+          values['password_confirmation'].toString());
+
+      developer.log('=== Register Data ===', name: 'AuthController');
+      developer.log('Name: $name', name: 'AuthController');
+      developer.log('Phone: $phone', name: 'AuthController');
+      developer.log('Password: $password', name: 'AuthController');
+      developer.log('Password Confirmation: $passwordConfirmation',
+          name: 'AuthController');
+
+      // التحقق من تطابق كلمتي المرور
+      if (password != passwordConfirmation) {
         Get.snackbar(
-          'خطأ في الاتصال',
-          'لا يمكن الاتصال بالسيرفر، تأكد من أن السيرفر يعمل',
+          '❌ خطأ',
+          'كلمتا المرور غير متطابقتين',
           backgroundColor: Colors.red,
           colorText: Colors.white,
-          icon: const Icon(Icons.error, color: Colors.white),
         );
         return;
       }
 
-      final values = registerFormKey.currentState!.value;
-
-      // التحقق من الحقول المطلوبة يدوياً
-      if (values['name'] == null || values['name'].toString().trim().isEmpty) {
-        Get.snackbar('خطأ', 'الاسم مطلوب');
-        return;
-      }
-
-      if (values['phone'] == null ||
-          values['phone'].toString().trim().isEmpty) {
-        Get.snackbar('خطأ', 'رقم الهاتف مطلوب');
-        return;
-      }
-
-      if (values['password'] == null || values['password'].toString().isEmpty) {
-        Get.snackbar('خطأ', 'كلمة المرور مطلوبة');
-        return;
-      }
-
-      if (values['password_confirmation'] == null ||
-          values['password_confirmation'].toString().isEmpty) {
-        Get.snackbar('خطأ', 'تأكيد كلمة المرور مطلوب');
-        return;
-      }
-
-      // التحقق من تطابق كلمات المرور
-      if (values['password'] != values['password_confirmation']) {
-        Get.snackbar('خطأ', 'كلمة المرور غير متطابقة');
-        return;
-      }
-
-      // تحويل الأرقام العربية للإنجليزية
-      final name = values['name'].toString().trim();
-      final phone =
-          convertArabicToEnglishNumbers(values['phone'].toString().trim());
-      final password =
-          convertArabicToEnglishNumbers(values['password'].toString());
-      final passwordConfirmation = convertArabicToEnglishNumbers(
-          values['password_confirmation'].toString());
-
-      // إعداد البيانات حسب متطلبات الـ API
-      final requestData = {
+      final response = await ApiService.to.register({
         'name': name,
         'phone': phone,
         'password': password,
         'password_confirmation': passwordConfirmation,
-      };
+      });
 
-      print('=== Register Request Data ===');
-      print('Name: $name');
-      print('Phone: $phone (original: ${values['phone']})');
-      print('Password Length: ${password.length}');
-      print('Password Confirmation Length: ${passwordConfirmation.length}');
-
-      final response = await ApiService.to.register(requestData);
-
-      print('=== Register Response ===');
-      print('Status Code: ${response.statusCode}');
-      print('Response Data: ${response.data}');
+      developer.log('=== Register Response ===', name: 'AuthController');
+      developer.log('Status Code: ${response.statusCode}',
+          name: 'AuthController');
+      developer.log('Response Data: ${response.data}', name: 'AuthController');
 
       if (response.statusCode == 201) {
-        // حفظ بيانات المستخدم والـ token
-        final responseData = response.data;
+        final data = response.data['data'];
+        final token = data['token'];
+        final user = data['user'];
 
-        if (responseData['token'] != null) {
-          await StorageService.to
-              .writeSecure('auth_token', responseData['token']);
-        }
+        // حفظ البيانات
+        await StorageService.to.writeSecure('auth_token', token);
+        await StorageService.to.writeSecure('user_data', user.toString());
 
-        if (responseData['user'] != null) {
-          try {
-            await StorageService.to
-                .writeSecure('user_data', responseData['user'].toString());
-            _user.value = UserModel.fromJson(responseData['user']);
-          } catch (parseError) {
-            print('=== User Data Parse Error ===');
-            print('Error parsing user data: $parseError');
-            print('User data: ${responseData['user']}');
-
-            // إذا فشل في تحليل بيانات المستخدم، نستمر مع الـ token فقط
-            Get.snackbar(
-              'تحذير',
-              'تم إنشاء الحساب بنجاح، لكن هناك مشكلة في تحميل البيانات الشخصية',
-              backgroundColor: Colors.orange,
-              colorText: Colors.white,
-              icon: const Icon(Icons.warning, color: Colors.white),
-              snackPosition: SnackPosition.TOP,
-              duration: const Duration(seconds: 3),
-              margin: const EdgeInsets.all(16),
-              borderRadius: 8,
-            );
-          }
-        }
-
+        Get.offAllNamed(AppRoutes.home);
         Get.snackbar(
-          'نجح',
-          'تم إنشاء الحساب بنجاح',
+          '🎉 تم التسجيل بنجاح',
+          'مرحباً بك في تطبيق تبادل غزة',
           backgroundColor: Colors.green,
           colorText: Colors.white,
-          icon: const Icon(Icons.check_circle, color: Colors.white),
-          snackPosition: SnackPosition.TOP,
           duration: const Duration(seconds: 3),
+          snackPosition: SnackPosition.TOP,
           margin: const EdgeInsets.all(16),
-          borderRadius: 8,
+          borderRadius: 12,
+          icon: const Icon(
+            Icons.check_circle,
+            color: Colors.white,
+            size: 24,
+          ),
         );
-
-        // الانتقال للصفحة الرئيسية
-        Get.offAllNamed(AppRoutes.home);
       }
     } catch (e) {
-      print('=== Register Error ===');
-      print('Error: $e');
+      developer.log('=== Register Error ===', name: 'AuthController');
+      developer.log('Error type: ${e.runtimeType}', name: 'AuthController');
+      developer.log('Error message: $e', name: 'AuthController');
 
-      String errorMessage = 'فشل في إنشاء الحساب';
-
-      if (e is dio.DioException) {
-        print('DioError Type: ${e.type}');
-        print('DioError Response: ${e.response?.data}');
-        print('DioError Status Code: ${e.response?.statusCode}');
-
-        if (e.response?.statusCode == 422) {
-          // خطأ في التحقق من البيانات
-          final errors = e.response?.data['errors'];
-          if (errors != null) {
-            if (errors['phone'] != null) {
-              errorMessage = 'رقم الهاتف مستخدم بالفعل';
-            } else if (errors['password'] != null) {
-              errorMessage = 'كلمة المرور غير صحيحة';
-            } else if (errors['name'] != null) {
-              errorMessage = 'الاسم غير صحيح';
-            } else {
-              errorMessage = errors.values.first[0] ?? 'بيانات غير صحيحة';
-            }
-          }
-        } else if (e.response?.statusCode == 500) {
-          errorMessage = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
-        }
+      String errorMessage = 'حدث خطأ أثناء التسجيل';
+      if (e.toString().contains('422')) {
+        errorMessage = 'بيانات غير صحيحة، يرجى التحقق من المعلومات المدخلة';
+      } else if (e.toString().contains('409')) {
+        errorMessage = 'رقم الهاتف مسجل مسبقاً';
+      } else if (e.toString().contains('500')) {
+        errorMessage = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
       }
 
       Get.snackbar(
-        'خطأ',
+        '❌ خطأ في التسجيل',
         errorMessage,
         backgroundColor: Colors.red,
         colorText: Colors.white,
-        icon: const Icon(Icons.error, color: Colors.white),
+        duration: const Duration(seconds: 4),
         snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 5),
         margin: const EdgeInsets.all(16),
-        borderRadius: 8,
+        borderRadius: 12,
+        icon: const Icon(
+          Icons.error,
+          color: Colors.white,
+          size: 24,
+        ),
       );
     } finally {
       _isLoading.value = false;
@@ -395,11 +269,27 @@ class AuthController extends GetxController {
 
   Future<void> _getUserProfile() async {
     try {
-      final response = await ApiService.to.get('profile');
+      final response = await ApiService.to.get('user/profile');
       if (response.statusCode == 200) {
-        _user.value = UserModel.fromJson(response.data['user']);
+        final responseData = response.data;
+
+        // Handle both old and new API response formats
+        Map<String, dynamic> userData;
+
+        if (responseData['data'] != null) {
+          // New format: {success, message, data: {user}, errors}
+          userData = responseData['data']['user'] ?? {};
+        } else {
+          // Old format: {user}
+          userData = responseData['user'] ?? {};
+        }
+
+        if (userData.isNotEmpty) {
+          _user.value = UserModel.fromJson(userData);
+        }
       }
     } catch (e) {
+      developer.log('Error getting user profile: $e', name: 'AuthController');
       await logout();
     }
   }
@@ -410,7 +300,7 @@ class AuthController extends GetxController {
       await _clearAuthData();
       Get.offAllNamed(AppRoutes.login);
     } catch (e) {
-      print('Logout error: $e');
+      developer.log('Logout error: $e', name: 'AuthController');
       // حتى لو فشل الطلب، نقوم بحذف البيانات المحلية
       await _clearAuthData();
       Get.offAllNamed(AppRoutes.login);

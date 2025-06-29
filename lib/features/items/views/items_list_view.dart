@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../controllers/items_controller.dart';
 import '../models/item_model.dart';
 import '../../../core/utils/app_theme.dart';
 import '../../../widgets/bottom_nav_bar.dart';
+import '../../../widgets/custom_card.dart';
 import '../../../core/utils/app_routes.dart';
 
 class ItemsListView extends GetView<ItemsController> {
@@ -102,7 +104,13 @@ class ItemsListView extends GetView<ItemsController> {
                         color: Colors.grey,
                       ),
                       SizedBox(height: 16),
-                      Text('لا توجد سلع متاحة حالياً'),
+                      Text(
+                        'لا توجد سلع متاحة حالياً',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -166,12 +174,13 @@ class ItemsListView extends GetView<ItemsController> {
         ),
         child: Row(
           children: [
-            Icon(Icons.filter_list, color: AppTheme.primaryColor, size: 20),
+            const Icon(Icons.filter_list,
+                color: AppTheme.primaryColor, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'عرض ${controller.resultsCount} نتيجة',
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppTheme.primaryColor,
                   fontWeight: FontWeight.w500,
                 ),
@@ -205,163 +214,13 @@ class ItemsListView extends GetView<ItemsController> {
   }
 
   Widget _buildItemCard(ItemModel item) {
-    return GestureDetector(
+    return CustomCard(
+      imageUrl: item.firstImageUrl,
+      title: item.title,
+      subtitle:
+          '${item.description}\n${item.user?.name ?? 'غير محدد'} • ${item.category?.name ?? 'غير محدد'}',
+      price: '${item.price.toStringAsFixed(0)} ₪',
       onTap: () => controller.goToItemDetail(item.id),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // صورة العنصر
-            Expanded(
-              flex: 3,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child:
-                    (item.fullImageUrl != null && item.fullImageUrl!.isNotEmpty)
-                        ? ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(16),
-                              topRight: Radius.circular(16),
-                            ),
-                            child: Image.network(
-                              item.fullImageUrl!,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                print('❌ Error loading image: $error');
-                                print('❌ Image URL: ${item.fullImageUrl}');
-                                return _buildDefaultImage();
-                              },
-                            ),
-                          )
-                        : _buildDefaultImage(),
-              ),
-            ),
-            // تفاصيل العنصر
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        item.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Flexible(
-                      child: Text(
-                        item.description,
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 11,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.person_outline,
-                          size: 12,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            item.user?.name ?? 'غير محدد',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.category_outlined,
-                          size: 12,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            item.category?.name ?? 'غير محدد',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 10,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDefaultImage() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.inventory_2_outlined,
-            size: 40,
-            color: AppTheme.primaryGreen,
-          ),
-          SizedBox(height: 8),
-          Text(
-            '0 ₪',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primaryGreen,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

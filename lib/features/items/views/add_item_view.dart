@@ -30,7 +30,7 @@ class AddItemView extends GetView<AddItemController> {
               Text('صور السلعة', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),
               Text(
-                'ملاحظة: سيتم رفع الصورة الأولى فقط',
+                'يمكنك إضافة حتى 5 صور للسلعة',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey[600],
                       fontStyle: FontStyle.italic,
@@ -78,20 +78,67 @@ class AddItemView extends GetView<AddItemController> {
               const SizedBox(height: 16),
 
               // Category
-              FormBuilderDropdown<String>(
-                name: 'category',
-                decoration: const InputDecoration(labelText: 'فئة السلعة'),
-                validator: FormBuilderValidators.required(
-                  errorText: 'الفئة مطلوبة',
-                ),
-                items: controller.categories
-                    .map(
-                      (category) => DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      ),
-                    )
-                    .toList(),
+              Obx(
+                () => controller.isCategoriesLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : controller.categories.isEmpty
+                        ? const Center(
+                            child: Text('لا توجد تصنيفات متاحة'),
+                          )
+                        : FormBuilderDropdown<String>(
+                            name: 'category',
+                            decoration: const InputDecoration(
+                                labelText: 'التصنيف الرئيسي'),
+                            validator: FormBuilderValidators.required(
+                              errorText: 'التصنيف الرئيسي مطلوب',
+                            ),
+                            items: controller.categories
+                                .map(
+                                  (category) => DropdownMenuItem(
+                                    value: category.displayName,
+                                    child: Text(category.displayName),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                final categoryId =
+                                    controller.getCategoryId(value);
+                                if (categoryId != null) {
+                                  controller.loadSubcategories(categoryId);
+                                }
+                              }
+                            },
+                          ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Subcategory
+              Obx(
+                () => controller.isSubcategoriesLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : controller.subcategories.isNotEmpty
+                        ? FormBuilderDropdown<String>(
+                            name: 'subcategory',
+                            decoration: const InputDecoration(
+                                labelText: 'التصنيف الفرعي (اختياري)'),
+                            items: [
+                              const DropdownMenuItem(
+                                value: '',
+                                child: Text('اختر التصنيف الفرعي'),
+                              ),
+                              ...controller.subcategories
+                                  .map(
+                                    (subcategory) => DropdownMenuItem(
+                                      value: subcategory.displayName,
+                                      child: Text(subcategory.displayName),
+                                    ),
+                                  )
+                                  .toList(),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
               ),
 
               const SizedBox(height: 16),
@@ -182,6 +229,26 @@ class AddItemView extends GetView<AddItemController> {
                 ),
               ),
 
+              const SizedBox(height: 16),
+
+              // Phone
+              FormBuilderTextField(
+                name: 'phone',
+                decoration: const InputDecoration(
+                  labelText: 'رقم الهاتف للتواصل',
+                  hintText: 'أدخل رقم الهاتف',
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                keyboardType: TextInputType.phone,
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(errorText: 'رقم الهاتف مطلوب'),
+                  FormBuilderValidators.minLength(
+                    10,
+                    errorText: 'رقم الهاتف قصير جداً',
+                  ),
+                ]),
+              ),
+
               const SizedBox(height: 32),
 
               // Submit Button
@@ -216,12 +283,17 @@ class AddItemView extends GetView<AddItemController> {
       ),
       child: InkWell(
         onTap: controller.pickImage,
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_a_photo, color: Colors.grey),
-            SizedBox(height: 4),
-            Text('إضافة صورة', style: TextStyle(fontSize: 10)),
+            const Icon(Icons.add_a_photo, color: Colors.grey),
+            const SizedBox(height: 4),
+            const Text('إضافة صورة', style: TextStyle(fontSize: 10)),
+            const SizedBox(height: 2),
+            Obx(() => Text(
+                  '${controller.selectedImages.length}/5',
+                  style: const TextStyle(fontSize: 8, color: Colors.grey),
+                )),
           ],
         ),
       ),
@@ -242,6 +314,25 @@ class AddItemView extends GetView<AddItemController> {
               width: 100,
               height: 120,
               fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${index + 1}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
           Positioned(

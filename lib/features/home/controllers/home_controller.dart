@@ -21,6 +21,7 @@ class HomeController extends GetxController {
   final recentActivity = <RecentActivityModel>[].obs;
   final trendingItems = <ItemModel>[].obs;
   final recentProperties = <PropertyModel>[].obs;
+  final trendingItemsError = ''.obs;
 
   @override
   void onInit() {
@@ -51,7 +52,22 @@ class HomeController extends GetxController {
     try {
       final response = await _apiService.getUserProfile();
       if (response.statusCode == 200) {
-        user.value = UserModel.fromJson(response.data['user']);
+        final responseData = response.data;
+
+        // Handle both old and new API response formats
+        Map<String, dynamic> userData;
+
+        if (responseData['data'] != null) {
+          // New format: {success, message, data: {user}, errors}
+          userData = responseData['data']['user'] ?? {};
+        } else {
+          // Old format: {user}
+          userData = responseData['user'] ?? {};
+        }
+
+        if (userData.isNotEmpty) {
+          user.value = UserModel.fromJson(userData);
+        }
       }
     } catch (e) {
       debugPrint('Error loading user profile: $e');
@@ -62,7 +78,23 @@ class HomeController extends GetxController {
     try {
       final response = await _apiService.getUserStatistics();
       if (response.statusCode == 200) {
-        statistics.value = StatisticsModel.fromJson(response.data);
+        final responseData = response.data;
+
+        // Handle both old and new API response formats
+        Map<String, dynamic> statsData;
+
+        if (responseData['data'] != null) {
+          // New format: {success, message, data: {statistics}, errors}
+          statsData =
+              responseData['data']['statistics'] ?? responseData['data'];
+        } else {
+          // Old format: {statistics}
+          statsData = responseData['statistics'] ?? responseData;
+        }
+
+        if (statsData.isNotEmpty) {
+          statistics.value = StatisticsModel.fromJson(statsData);
+        }
       }
     } catch (e) {
       debugPrint('Error loading statistics: $e');
@@ -73,7 +105,26 @@ class HomeController extends GetxController {
     try {
       final response = await _apiService.getUserRecentActivity();
       if (response.statusCode == 200) {
-        final List<dynamic> activities = response.data['recent_activity'];
+        final responseData = response.data;
+
+        // Handle both old and new API response formats
+        List<dynamic> activities;
+
+        if (responseData['data'] != null) {
+          // New format: {success, message, data: {recent_activity}, errors}
+          final data = responseData['data'];
+          if (data['recent_activity'] != null) {
+            activities = data['recent_activity'] as List<dynamic>;
+          } else if (data is List) {
+            activities = data;
+          } else {
+            activities = [];
+          }
+        } else {
+          // Old format: {recent_activity}
+          activities = responseData['recent_activity'] as List<dynamic>? ?? [];
+        }
+
         recentActivity.value = activities
             .map((activity) => RecentActivityModel.fromJson(activity))
             .toList();
@@ -86,6 +137,7 @@ class HomeController extends GetxController {
   Future<void> loadTrendingItems() async {
     try {
       print('🔥 Starting to load trending items...');
+      trendingItemsError.value = ''; // مسح الأخطاء السابقة
       final items = await _itemsService.getTrendingItems();
       trendingItems.value = items;
       print('✅ Successfully loaded ${items.length} trending items');
@@ -98,6 +150,19 @@ class HomeController extends GetxController {
     } catch (e) {
       print('💥 Error loading trending items: $e');
       print('💥 Error stack trace: ${StackTrace.current}');
+
+      // تحسين رسالة الخطأ لتكون أكثر وضوحاً للمستخدم
+      String errorMessage = 'حدث خطأ في تحميل السلع الرائجة';
+      if (e.toString().contains('500')) {
+        errorMessage = 'خطأ في الخادم - يرجى المحاولة لاحقاً';
+      } else if (e.toString().contains('404')) {
+        errorMessage = 'الخدمة غير متوفرة حالياً';
+      } else if (e.toString().contains('network')) {
+        errorMessage = 'مشكلة في الاتصال بالإنترنت';
+      }
+
+      trendingItemsError.value = errorMessage;
+      trendingItems.value = []; // تأكد من أن القائمة فارغة في حالة الخطأ
     }
   }
 

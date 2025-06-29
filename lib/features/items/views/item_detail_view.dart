@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../controllers/item_detail_controller.dart';
 
 class ItemDetailView extends GetView<ItemDetailController> {
@@ -32,13 +31,13 @@ class ItemDetailView extends GetView<ItemDetailController> {
               height: 250,
               color: Colors.grey[200],
               child:
-                  (item.fullImageUrl != null && item.fullImageUrl!.isNotEmpty)
+                  (item.firstImageUrl != null && item.firstImageUrl!.isNotEmpty)
                       ? Image.network(
-                          item.fullImageUrl!,
+                          item.firstImageUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             print('❌ Error loading image: $error');
-                            print('❌ Image URL: ${item.fullImageUrl}');
+                            print('❌ Image URL: ${item.firstImageUrl}');
                             return const Center(
                               child: Icon(Icons.home_outlined,
                                   size: 60, color: Colors.grey),
@@ -203,6 +202,27 @@ class ItemDetailView extends GetView<ItemDetailController> {
                                           color: Colors.grey[600],
                                         ),
                                       ),
+                                      if (item.phone != null &&
+                                          item.phone!.isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.phone,
+                                              size: 16,
+                                              color: Colors.grey[600],
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              item.phone!,
+                                              style: TextStyle(
+                                                color: Colors.grey[600],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
